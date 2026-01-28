@@ -1,0 +1,16 @@
+services:
+  db:
+  ports:
+    - "5433:5432"
+    image: postgres:16
+    ports:
+    - "5433:5432"
+    environment:
+      POSTGRES_USER: lucien
+      POSTGRES_PASSWORD: lucien_dev
+      POSTGRES_DB: lucien_dev
+    volumes:
+      - lucien_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  lucien_postgres_data:

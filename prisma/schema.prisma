@@ -1,0 +1,958 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  lucien_admin
+  lucien_operator
+  org_admin
+  org_user
+}
+
+enum InquiryStatus {
+  new
+  triaged
+  converted
+  closed
+}
+
+enum EngagementStage {
+  triage
+  scope_pack
+  sow
+  delivery
+  handover
+  ongoing
+  closed
+}
+
+enum EngagementStatus {
+  on_track
+  at_risk
+  blocked
+  completed
+}
+
+enum DocumentCategory {
+  nda
+  sow
+  contract
+  deliverable
+  report
+  invoice
+  client_input
+  evidence
+  other
+}
+
+enum MilestoneStatus {
+  planned
+  in_progress
+  complete
+}
+
+enum DeliverableStatus {
+  draft
+  review
+  approved
+}
+
+enum DeliveryTaskStatus {
+  todo
+  in_progress
+  blocked
+  done
+}
+
+enum EngagementTermStatus {
+  draft
+  active
+  superseded
+}
+
+enum TalentStatus {
+  NEW
+  REVIEWED
+  APPROVED
+  ARCHIVED
+}
+
+enum TalentSource {
+  PARTNERS_FORM
+  PORTAL
+  SCOUT
+  IMPORT_CSV
+}
+
+enum TalentContactStatus {
+  NOT_CONTACTED
+  CONTACTED
+  RESPONDED
+  ONBOARDED
+}
+
+enum ScopeStatus {
+  draft
+  sent
+  approved
+  rejected
+}
+
+enum ChangeImpact {
+  scope
+  schedule
+  cost
+  risk
+}
+
+enum ChangeSeverity {
+  low
+  med
+  high
+}
+
+enum ChangeStatus {
+  proposed
+  needs_info
+  approved
+  rejected
+  implemented
+  cancelled
+}
+
+enum EditEntityType {
+  engagement
+  scope
+  change_request
+  invoice
+  document
+  deliverable
+  milestone
+}
+
+enum EditKind {
+  minor_edit
+  controlled_edit
+  archive
+  supersede
+}
+
+enum EditStatus {
+  applied
+  pending_approval
+  rejected
+}
+
+enum StaffingIntentState {
+  DRAFT
+  ACTIVE
+  FULFILLED
+  CANCELLED
+}
+
+enum TalentMatchStatus {
+  SUGGESTED
+  SHORTLISTED
+  CONTACTED
+  RESPONDED
+  DECLINED
+  HIRED
+  ARCHIVED
+}
+
+enum OutreachChannel {
+  EMAIL
+  LINKEDIN
+  XING
+  OTHER
+}
+
+enum OutreachStatus {
+  QUEUED
+  SENT
+  FAILED
+  REPLIED
+}
+
+enum EmailJobStatus {
+  QUEUED
+  SENT
+  FAILED
+}
+
+enum ScoutSource {
+  WEB
+  LINKEDIN
+  XING
+  DIRECTORY
+  IMPORT_CSV
+  REFERRAL
+  PARTNER
+}
+
+enum ScoutRunStatus {
+  OK
+  FAILED
+}
+
+model Org {
+  id         String       @id @default(cuid())
+  name       String       @unique
+  domain     String?
+  createdAt  DateTime     @default(now())
+  users      User[]
+  inquiries  Inquiry[]
+  engagements Engagement[]
+  engagementMembers EngagementMember[]
+  timeEntries TimeEntry[]
+  deliveryTasks DeliveryTask[]
+  engagementTerms EngagementTerm[]
+  documents  Document[]
+  milestones Milestone[]
+  deliverables Deliverable[]
+  scopeProposals ScopeProposal[]
+  changeRequests ChangeRequest[]
+  invoices Invoice[]
+  notifications Notification[]
+  auditEvents AuditEvent[]
+  editEvents EditEvent[]
+  staffingIntents StaffingIntent[]
+  outreachLogs OutreachLog[]
+  emailJobs EmailJob[]
+  scoutJobRuns ScoutJobRun[]
+  searchIntents SearchIntent[]
+}
+
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  name          String?
+  role          UserRole   @default(org_user)
+  orgId         String
+  createdAt     DateTime   @default(now())
+  lastLoginAt   DateTime?
+  emailVerified DateTime?
+  onboardedAt   DateTime?
+  onboardingData Json?
+
+  org        Org       @relation(fields: [orgId], references: [id])
+  accounts   Account[]
+  sessions   Session[]
+  documents  Document[] @relation("UploadedDocuments")
+  auditEvents AuditEvent[]
+  ownedEngagements Engagement[] @relation("EngagementOwner")
+  approvedDeliverables Deliverable[] @relation("DeliverableApprover")
+  scopeProposals ScopeProposal[] @relation("ScopeProposalAuthor")
+  createdChangeRequests ChangeRequest[] @relation("ChangeRequestCreator")
+  assignedChangeRequests ChangeRequest[] @relation("ChangeRequestAssignee")
+  notifications Notification[]
+  editEvents EditEvent[] @relation("EditEventCreator")
+  archivedDocuments Document[] @relation("DocumentArchivist")
+  engagementMembers EngagementMember[]
+  timeEntries TimeEntry[]
+  ownedDeliveryTasks DeliveryTask[] @relation("DeliveryTaskOwner")
+  approvedTimeEntries TimeEntry[] @relation("TimeEntryApprover")
+  createdTalentProfiles TalentProfile[]
+  createdOutreachLogs OutreachLog[] @relation("OutreachLogCreator")
+
+  @@index([orgId])
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Service {
+  id                 String    @id @default(cuid())
+  slug               String    @unique
+  sku                String    @unique
+  title              String
+  pricingModel       String
+  priceFrom          Int?
+  currency           String
+  depositAmountCents Int?
+  deliveryWindow     String
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  inquiries          Inquiry[]
+  orders             Order[]
+}
+
+model Customer {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  organization String
+  role         String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  inquiries    Inquiry[]
+  orders       Order[]
+}
+
+model Inquiry {
+  id           String        @id @default(cuid())
+  orgId        String
+  organization String
+  contactName  String?
+  contactEmail String
+  role         String?
+  emailHash    String
+  serviceSlug  String
+  timeframe    String
+  note         String?
+  mode         String?
+  message      String?
+  engagement   String?
+  timeline     String?
+  purchaseType String?
+  status       InquiryStatus @default(new)
+  source       String?
+  consent      Boolean       @default(false)
+  utmSource    String?
+  utmMedium    String?
+  utmCampaign  String?
+  utmTerm      String?
+  utmContent   String?
+  createdAt    DateTime      @default(now())
+  serviceId    String?
+  customerId   String?
+
+  org      Org       @relation(fields: [orgId], references: [id])
+  service  Service?  @relation(fields: [serviceId], references: [id])
+  customer Customer? @relation(fields: [customerId], references: [id])
+  engagementRecord Engagement?
+  scopeProposals ScopeProposal[]
+  documents Document[]
+  staffingIntents StaffingIntent[]
+
+  @@index([orgId])
+  @@index([status])
+}
+
+model Engagement {
+  id            String           @id @default(cuid())
+  orgId         String
+  title         String
+  serviceSlug   String?
+  stage         EngagementStage  @default(triage)
+  status        EngagementStatus @default(on_track)
+  startDate     DateTime?
+  targetDate    DateTime?
+  procurementRef String?
+  purchaseOrderRef String?
+  costCenter    String?
+  ownerId       String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  inquiryId     String?          @unique
+
+  org       Org      @relation(fields: [orgId], references: [id])
+  inquiry   Inquiry? @relation(fields: [inquiryId], references: [id])
+  owner     User?    @relation("EngagementOwner", fields: [ownerId], references: [id])
+  documents Document[]
+  milestones Milestone[]
+  deliverables Deliverable[]
+  members EngagementMember[]
+  timeEntries TimeEntry[]
+  deliveryTasks DeliveryTask[]
+  engagementTerms EngagementTerm[]
+  talentAssignments TalentAssignment[]
+  scopeProposals ScopeProposal[]
+  changeRequests ChangeRequest[]
+  invoices Invoice[]
+  staffingIntents StaffingIntent[]
+
+  @@index([orgId])
+}
+
+model EngagementMember {
+  id           String   @id @default(cuid())
+  orgId        String
+  engagementId String
+  userId       String
+  roleTitle    String
+  allocationHours Int?
+  rateHourly   Float?
+  clientVisible Boolean @default(true)
+  startDate    DateTime?
+  endDate      DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  org        Org        @relation(fields: [orgId], references: [id])
+  engagement Engagement @relation(fields: [engagementId], references: [id])
+  user       User       @relation(fields: [userId], references: [id])
+
+  @@index([orgId])
+  @@index([engagementId])
+  @@index([userId])
+}
+
+model TimeEntry {
+  id           String   @id @default(cuid())
+  orgId        String
+  engagementId String
+  userId       String
+  entryDate    DateTime
+  hours        Float
+  roleTitle    String?
+  note         String?
+  createdAt    DateTime @default(now())
+  approvedAt   DateTime?
+  approvedByUserId String?
+
+  org        Org        @relation(fields: [orgId], references: [id])
+  engagement Engagement @relation(fields: [engagementId], references: [id])
+  user       User       @relation(fields: [userId], references: [id])
+  approvedBy User?      @relation("TimeEntryApprover", fields: [approvedByUserId], references: [id])
+
+  @@index([orgId])
+  @@index([engagementId])
+  @@index([userId])
+}
+
+model DeliveryTask {
+  id           String             @id @default(cuid())
+  orgId        String
+  engagementId String
+  title        String
+  status       DeliveryTaskStatus @default(todo)
+  ownerId      String?
+  dueDate      DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  org        Org        @relation(fields: [orgId], references: [id])
+  engagement Engagement @relation(fields: [engagementId], references: [id])
+  owner      User?      @relation("DeliveryTaskOwner", fields: [ownerId], references: [id])
+
+  @@index([orgId])
+  @@index([engagementId])
+}
+
+model EngagementTerm {
+  id           String              @id @default(cuid())
+  orgId        String
+  engagementId String
+  title        String
+  summary      String
+  status       EngagementTermStatus @default(draft)
+  effectiveDate DateTime?
+  endDate      DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  org        Org        @relation(fields: [orgId], references: [id])
+  engagement Engagement @relation(fields: [engagementId], references: [id])
+
+  @@index([orgId])
+  @@index([engagementId])
+}
+
+model Document {
+  id               String           @id @default(cuid())
+  orgId            String
+  engagementId     String?
+  inquiryId        String?
+  category         DocumentCategory
+  name             String
+  label            String?
+  description      String?
+  mimeType         String
+  size             Int
+  checksum         String?
+  storageKey       String
+  createdAt        DateTime         @default(now())
+  uploadedByUserId String?
+  archivedAt       DateTime?
+  archivedByUserId String?
+  archiveReason    String?
+
+  org         Org         @relation(fields: [orgId], references: [id])
+  engagement  Engagement? @relation(fields: [engagementId], references: [id])
+  inquiry     Inquiry?    @relation(fields: [inquiryId], references: [id])
+  uploadedBy  User?       @relation("UploadedDocuments", fields: [uploadedByUserId], references: [id])
+  archivedBy  User?       @relation("DocumentArchivist", fields: [archivedByUserId], references: [id])
+  deliverable Deliverable?
+
+  @@index([orgId])
+  @@index([engagementId])
+  @@index([inquiryId])
+}
+
+model AuditEvent {
+  id           String   @id @default(cuid())
+  orgId        String
+  userId       String?
+  action       String
+  resourceType String
+  resourceId   String?
+  metaJson     String?
+  ip           String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  org  Org   @relation(fields: [orgId], references: [id])
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([orgId, createdAt])
+}
+
+model ChangeRequest {
+  id               String         @id @default(cuid())
+  orgId            String
+  engagementId     String
+  createdByUserId  String
+  assignedToUserId String?
+  title            String
+  description      String
+  impact           ChangeImpact
+  severity         ChangeSeverity
+  status           ChangeStatus   @default(proposed)
+  requestedAt      DateTime       @default(now())
+  decidedAt        DateTime?
+  implementedAt    DateTime?
+  decisionNote     String?
+  costDeltaEUR     Int?
+  scheduleDeltaDays Int?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  org         Org        @relation(fields: [orgId], references: [id])
+  engagement  Engagement @relation(fields: [engagementId], references: [id])
+  createdBy   User       @relation("ChangeRequestCreator", fields: [createdByUserId], references: [id])
+  assignedTo  User?      @relation("ChangeRequestAssignee", fields: [assignedToUserId], references: [id])
+  editEvents  EditEvent[]
+
+  @@index([orgId])
+  @@index([engagementId])
+  @@index([status])
+}
+
+model Invoice {
+  id              String        @id @default(cuid())
+  orgId           String
+  engagementId    String?
+  scopeProposalId String?
+  invoiceNumber   String?
+  internalNote    String?
+  issueDate       DateTime?
+  dueDate         DateTime?
+  paidAt          DateTime?
+  referencePO     String?
+  currency        String        @default("EUR")
+  amountEUR       Int?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  org           Org            @relation(fields: [orgId], references: [id])
+  engagement    Engagement?    @relation(fields: [engagementId], references: [id])
+  scopeProposal ScopeProposal? @relation(fields: [scopeProposalId], references: [id])
+
+  @@index([orgId])
+  @@index([engagementId])
+}
+
+model Milestone {
+  id           String          @id @default(cuid())
+  orgId        String
+  engagementId String
+  title        String
+  dueDate      DateTime?
+  status       MilestoneStatus @default(planned)
+  order        Int             @default(0)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  org        Org        @relation(fields: [orgId], references: [id])
+  engagement Engagement @relation(fields: [engagementId], references: [id])
+
+  @@index([orgId])
+  @@index([engagementId])
+}
+
+model Deliverable {
+  id            String           @id @default(cuid())
+  orgId         String
+  engagementId  String
+  title         String
+  status        DeliverableStatus @default(draft)
+  documentId    String?          @unique
+  approvedAt    DateTime?
+  approvedById  String?
+  approvalNote  String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  org        Org        @relation(fields: [orgId], references: [id])
+  engagement Engagement @relation(fields: [engagementId], references: [id])
+  document   Document?  @relation(fields: [documentId], references: [id])
+  approvedBy User?      @relation("DeliverableApprover", fields: [approvedById], references: [id])
+
+  @@index([orgId])
+  @@index([engagementId])
+}
+
+model ScopeProposal {
+  id             String      @id @default(cuid())
+  orgId          String
+  inquiryId      String?
+  engagementId   String?
+  title          String
+  fixedPriceEUR  Int
+  scopeSummary   String
+  deliverablesJson Json
+  status         ScopeStatus @default(draft)
+  clientNote     String?
+  createdById    String?
+  sentAt         DateTime?
+  approvedAt     DateTime?
+  rejectedAt     DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  org        Org        @relation(fields: [orgId], references: [id])
+  inquiry    Inquiry?   @relation(fields: [inquiryId], references: [id])
+  engagement Engagement? @relation(fields: [engagementId], references: [id])
+  createdBy  User?      @relation("ScopeProposalAuthor", fields: [createdById], references: [id])
+  invoices   Invoice[]
+  staffingIntents StaffingIntent[]
+
+  @@index([orgId])
+  @@index([inquiryId])
+  @@index([engagementId])
+}
+
+model Notification {
+  id              String   @id @default(cuid())
+  orgId           String
+  recipientUserId String
+  type            String
+  title           String
+  body            String
+  entityType      String?
+  entityId        String?
+  readAt          DateTime?
+  createdAt       DateTime @default(now())
+
+  org      Org  @relation(fields: [orgId], references: [id])
+  recipient User @relation(fields: [recipientUserId], references: [id])
+
+  @@index([orgId])
+  @@index([recipientUserId, readAt])
+}
+
+model EditEvent {
+  id                    String         @id @default(cuid())
+  orgId                 String
+  entityType            EditEntityType
+  entityId              String
+  createdByUserId       String
+  kind                  EditKind
+  status                EditStatus
+  reason                String
+  diffJson              Json
+  linkedChangeRequestId String?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  org                Org            @relation(fields: [orgId], references: [id])
+  createdBy          User           @relation("EditEventCreator", fields: [createdByUserId], references: [id])
+  linkedChangeRequest ChangeRequest? @relation(fields: [linkedChangeRequestId], references: [id])
+
+  @@index([orgId, createdAt])
+  @@index([entityType, entityId])
+}
+
+model StaffingIntent {
+  id               String              @id @default(cuid())
+  orgId            String
+  inquiryId        String?
+  scopeProposalId  String?
+  engagementId     String?
+  state            StaffingIntentState @default(DRAFT)
+  rolesJson        Json
+  requirementsJson Json
+  metaJson         Json?
+  notes            String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  org           Org            @relation(fields: [orgId], references: [id])
+  inquiry       Inquiry?       @relation(fields: [inquiryId], references: [id])
+  scopeProposal ScopeProposal? @relation(fields: [scopeProposalId], references: [id])
+  engagement    Engagement?    @relation(fields: [engagementId], references: [id])
+  matches       TalentMatch[]
+  outreachLogs  OutreachLog[]
+  scoutRuns     ScoutJobRun[]
+
+  @@index([orgId])
+  @@index([inquiryId])
+  @@index([scopeProposalId])
+  @@index([engagementId])
+  @@index([state])
+}
+
+model TalentMatch {
+  id               String            @id @default(cuid())
+  staffingIntentId String
+  talentProfileId  String
+  score            Float
+  reasonsJson      Json
+  status           TalentMatchStatus @default(SUGGESTED)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  staffingIntent StaffingIntent @relation(fields: [staffingIntentId], references: [id])
+  talentProfile  TalentProfile  @relation(fields: [talentProfileId], references: [id])
+
+  @@unique([staffingIntentId, talentProfileId])
+  @@index([staffingIntentId])
+  @@index([talentProfileId])
+  @@index([status])
+}
+
+model OutreachLog {
+  id               String         @id @default(cuid())
+  orgId            String
+  staffingIntentId String
+  talentProfileId  String
+  channel          OutreachChannel
+  status           OutreachStatus  @default(QUEUED)
+  templateKey      String
+  payloadJson      Json
+  createdByUserId  String?
+  sentAt           DateTime?
+  repliedAt        DateTime?
+  error            String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  org            Org            @relation(fields: [orgId], references: [id])
+  staffingIntent StaffingIntent @relation(fields: [staffingIntentId], references: [id])
+  talentProfile  TalentProfile  @relation(fields: [talentProfileId], references: [id])
+  createdBy      User?          @relation("OutreachLogCreator", fields: [createdByUserId], references: [id])
+
+  @@index([orgId])
+  @@index([staffingIntentId])
+  @@index([talentProfileId])
+  @@index([status])
+}
+
+model EmailJob {
+  id             String        @id @default(cuid())
+  orgId          String
+  toEmail        String
+  templateKey    String
+  payloadJson    Json
+  status         EmailJobStatus @default(QUEUED)
+  retryCount     Int           @default(0)
+  idempotencyKey String        @unique
+  scheduledAt    DateTime
+  sentAt         DateTime?
+  error          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  org Org @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
+  @@index([status])
+  @@index([scheduledAt])
+}
+
+model ScoutJobRun {
+  id               String        @id @default(cuid())
+  orgId            String
+  source           ScoutSource
+  searchIntentId   String?
+  staffingIntentId String?
+  status           ScoutRunStatus @default(OK)
+  foundCount       Int           @default(0)
+  createdCount     Int           @default(0)
+  updatedCount     Int           @default(0)
+  dedupedCount     Int           @default(0)
+  error            String?
+  startedAt        DateTime      @default(now())
+  finishedAt       DateTime?
+
+  org           Org            @relation(fields: [orgId], references: [id])
+  searchIntent  SearchIntent?  @relation(fields: [searchIntentId], references: [id])
+  staffingIntent StaffingIntent? @relation(fields: [staffingIntentId], references: [id])
+
+  @@index([orgId])
+  @@index([searchIntentId])
+  @@index([staffingIntentId])
+  @@index([source])
+  @@index([status])
+}
+
+model SearchIntent {
+  id                  String   @id @default(cuid())
+  orgId               String
+  enabled             Boolean  @default(true)
+  priority            Int      @default(0)
+  targetSources       Json
+  quotasJson          Json
+  roleIds             Json
+  domainIds           Json
+  geo                 String?
+  seniorityId         String?
+  modeIds             Json
+  availabilityWindowId String?
+  keywords            Json
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  org       Org         @relation(fields: [orgId], references: [id])
+  scoutRuns ScoutJobRun[]
+
+  @@index([orgId])
+  @@index([enabled])
+  @@index([priority])
+}
+
+model Order {
+  id                   String    @id @default(cuid())
+  serviceId            String?
+  customerId           String?
+  status               String
+  purchaseType         String
+  amountCents          Int
+  currency             String
+  stripeSessionId      String?
+  stripePaymentIntentId String?
+  receiptToken         String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  service  Service?  @relation(fields: [serviceId], references: [id])
+  customer Customer? @relation(fields: [customerId], references: [id])
+  payments Payment[]
+}
+
+model Payment {
+  id                   String   @id @default(cuid())
+  orderId              String
+  status               String
+  provider             String
+  amountCents          Int
+  currency             String
+  stripePaymentIntentId String?
+  stripeSessionId      String?
+  stripeEventId        String?  @unique
+  createdAt            DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id])
+}
+
+model TalentProfile {
+  id                String              @id @default(cuid())
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  fullName          String
+  email             String              @unique
+  locationTimezone  String?
+  linkedInUrl       String?
+  xingUrl           String?
+  geo               String?
+  primaryRole       String
+  secondaryRoles    String[]            @default([])
+  domains           String[]            @default([])
+  seniority         String
+  availabilityWindow String
+  engagementModes   String[]            @default([])
+  rateBand          String?
+  languages         String[]            @default([])
+  status            TalentStatus        @default(NEW)
+  notes             String?
+  createdByUserId   String?
+  contactStatus     TalentContactStatus @default(NOT_CONTACTED)
+  lastContactedAt   DateTime?
+  optOutAt          DateTime?
+  optOutReason      String?
+
+  createdByUser User?            @relation(fields: [createdByUserId], references: [id])
+  signals      TalentSignal[]
+  assignments  TalentAssignment[]
+  matches      TalentMatch[]
+  outreachLogs OutreachLog[]
+
+  @@index([status])
+}
+
+model TalentSignal {
+  id                String       @id @default(cuid())
+  profileId         String
+  payloadJson       Json
+  source            TalentSource
+  version           Int          @default(1)
+  externalProfileUrl String?
+  externalId        String?
+  dedupeKey         String?
+  sourceQuery       String?
+  capturedAt        DateTime?
+  createdAt         DateTime     @default(now())
+
+  profile TalentProfile @relation(fields: [profileId], references: [id])
+
+  @@index([profileId, createdAt])
+}
+
+model TalentAssignment {
+  id               String     @id @default(cuid())
+  profileId        String
+  engagementId     String?
+  roleId           String?
+  roleLabel        String
+  allocationPct    Int
+  startDate        DateTime?
+  endDate          DateTime?
+  sharedWithClient Boolean    @default(false)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  profile    TalentProfile @relation(fields: [profileId], references: [id])
+  engagement Engagement?   @relation(fields: [engagementId], references: [id])
+
+  @@index([profileId])
+  @@index([engagementId])
+}

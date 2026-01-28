@@ -1,0 +1,318 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#content"
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - link "Lucien home" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - text: LUCIEN
+        - navigation "Primary" [ref=e7]:
+          - link "Marketplace" [ref=e8] [cursor=pointer]:
+            - /url: /marketplace
+          - link "How We Work" [ref=e9] [cursor=pointer]:
+            - /url: /how-we-work
+          - link "Procurement" [ref=e10] [cursor=pointer]:
+            - /url: /procurement
+          - link "Security" [ref=e11] [cursor=pointer]:
+            - /url: /security
+          - link "Insights" [ref=e12] [cursor=pointer]:
+            - /url: /insights
+          - link "About" [ref=e13] [cursor=pointer]:
+            - /url: /about
+          - link "Legal" [ref=e14] [cursor=pointer]:
+            - /url: /legal
+          - link "Contact" [ref=e15] [cursor=pointer]:
+            - /url: /contact
+      - generic [ref=e16]:
+        - button "Open portal login" [ref=e17]:
+          - img [ref=e20]
+        - link "Request scope" [ref=e23] [cursor=pointer]:
+          - /url: /request-scope
+          - img [ref=e26]
+          - text: Request scope
+  - main [ref=e29]:
+    - generic [ref=e31]:
+      - generic [ref=e32]:
+        - paragraph [ref=e33]: Calm authority for complex systems
+        - heading "Systems Thinking for Mission-Critical Technology" [level=1] [ref=e34]
+        - paragraph [ref=e35]: We are not consultants. We architect systems.
+        - generic [ref=e36]:
+          - link "Explore Solutions" [ref=e37] [cursor=pointer]:
+            - /url: /marketplace
+          - link "Request scope" [ref=e38] [cursor=pointer]:
+            - /url: /request-scope
+      - generic [ref=e40]:
+        - img "System map connecting operations, risk, data, security, and delivery" [ref=e41]:
+          - button "Core node" [ref=e46]:
+            - generic [ref=e48]: Core
+          - button "Operations node" [ref=e49]:
+            - generic [ref=e51]: Operations
+          - button "Risk node" [ref=e52]:
+            - generic [ref=e54]: Risk
+          - button "Data node" [ref=e55]:
+            - generic [ref=e57]: Data
+          - button "Security node" [ref=e58]:
+            - generic [ref=e60]: Security
+          - button "Delivery node" [ref=e61]:
+            - generic [ref=e63]: Delivery
+        - paragraph [ref=e64]: Each engagement maps mission needs to system dependencies, risk controls, and delivery pathways.
+    - generic [ref=e67]:
+      - generic [ref=e68]:
+        - generic [ref=e69]:
+          - paragraph [ref=e70]: Operating contexts
+          - heading "Built for high-consequence environments" [level=2] [ref=e71]
+        - link "How we work" [ref=e72] [cursor=pointer]:
+          - /url: /how-we-work
+      - generic [ref=e73]:
+        - generic [ref=e75]:
+          - img [ref=e77]
+          - text: Enterprise
+        - generic [ref=e88]:
+          - img [ref=e90]
+          - text: Defense & Security
+        - generic [ref=e93]:
+          - img [ref=e95]
+          - text: Public Sector
+        - generic [ref=e102]:
+          - img [ref=e104]
+          - text: Technology Partners
+    - generic [ref=e108]:
+      - generic [ref=e109]:
+        - paragraph [ref=e110]: Case snapshots
+        - heading "Quiet outcomes, measurable impact" [level=2] [ref=e111]
+      - generic [ref=e112]:
+        - generic [ref=e113]:
+          - generic [ref=e114]:
+            - img [ref=e116]
+            - heading "Resilience uplift" [level=3] [ref=e123]
+          - paragraph [ref=e124]: Reduced mission downtime exposure by 42% across a multi-site network.
+        - generic [ref=e125]:
+          - generic [ref=e126]:
+            - img [ref=e128]
+            - heading "Secure integration" [level=3] [ref=e130]
+          - paragraph [ref=e131]: Unified six data sources into a controlled fusion layer in 10 weeks.
+        - generic [ref=e132]:
+          - generic [ref=e133]:
+            - img [ref=e135]
+            - heading "Operational speed" [level=3] [ref=e138]
+          - paragraph [ref=e139]: Cut decision latency by 31% for logistics command workflows.
+    - generic [ref=e142]:
+      - generic [ref=e143]:
+        - paragraph [ref=e144]: Projects & engagements
+        - heading "Evidence of delivery in complex environments" [level=2] [ref=e145]
+        - paragraph [ref=e146]: A sample of completed and ongoing mission-critical engagements, presented without client identifiers.
+      - generic [ref=e147]:
+        - generic [ref=e148]:
+          - generic [ref=e149]:
+            - generic [ref=e150]: Completed
+            - generic [ref=e151]: Project
+          - heading "Operational control recovery" [level=3] [ref=e152]
+          - paragraph [ref=e153]: Program drift and missed delivery gates across a multi-site system.
+          - paragraph [ref=e154]: Takeover, architecture stabilization, and governance pack.
+        - generic [ref=e155]:
+          - generic [ref=e156]:
+            - generic [ref=e157]: Active
+            - generic [ref=e158]: Project
+          - heading "Secure data integration" [level=3] [ref=e159]
+          - paragraph [ref=e160]: Fragmented data flows with inconsistent access controls.
+          - paragraph [ref=e161]: Data architecture, integration plan, and secure delivery model.
+        - generic [ref=e162]:
+          - generic [ref=e163]:
+            - generic [ref=e164]: Completed
+            - generic [ref=e165]: Project
+          - heading "Industrial visibility uplift" [level=3] [ref=e166]
+          - paragraph [ref=e167]: Limited real-time insight into plant throughput and risk.
+          - paragraph [ref=e168]: Instrumentation plan, reporting pipeline, and handoff runbooks.
+    - generic [ref=e171]:
+      - generic [ref=e172]:
+        - paragraph [ref=e173]: What we can do
+        - heading "Systems delivery beyond advisory work" [level=2] [ref=e174]
+        - paragraph [ref=e175]: Lucien teams design and deliver operational systems. We stay accountable through build, integration, and handoff — not just slide decks.
+      - generic [ref=e176]:
+        - generic [ref=e177]:
+          - heading "Custom software built to mission needs" [level=3] [ref=e178]
+          - paragraph [ref=e179]: We engineer platforms, workflows, and control layers that align to mission constraints and security posture.
+        - generic [ref=e180]:
+          - heading "On-site or remote takeover" [level=3] [ref=e181]
+          - paragraph [ref=e182]: Embedded delivery teams stabilize critical systems fast, either on-site or through secure remote operations.
+        - generic [ref=e183]:
+          - heading "Operational integration and delivery" [level=3] [ref=e184]
+          - paragraph [ref=e185]: We integrate across IT, OT, and data environments with clear ownership, sequencing, and continuity plans.
+        - generic [ref=e186]:
+          - heading "Assurance through handoff" [level=3] [ref=e187]
+          - paragraph [ref=e188]: Every engagement ends with validated runbooks, governance, and an operational readiness review.
+    - generic [ref=e191]:
+      - generic [ref=e192]:
+        - paragraph [ref=e193]: Marketplace
+        - heading "Engage on your terms" [level=2] [ref=e194]
+        - paragraph [ref=e195]: Browse scoped services, filter by operational context, and open a secure inquiry when ready.
+      - link "View Marketplace" [ref=e196] [cursor=pointer]:
+        - /url: /marketplace
+  - contentinfo [ref=e197]:
+    - generic [ref=e198]:
+      - generic [ref=e199]:
+        - generic [ref=e200]:
+          - generic [ref=e201]: LUCIEN
+          - paragraph [ref=e202]: Systems thinking for mission-critical technology. Structured, measured, and aligned with enterprise realities.
+          - paragraph [ref=e203]: company@lucien.technology
+        - generic [ref=e204]:
+          - generic [ref=e205]:
+            - generic [ref=e206]: Explore
+            - list [ref=e208]:
+              - listitem [ref=e209]:
+                - link "Marketplace" [ref=e210] [cursor=pointer]:
+                  - /url: /marketplace
+                  - generic [ref=e211]:
+                    - img [ref=e214]
+                    - text: Marketplace
+              - listitem [ref=e217]:
+                - link "How We Work" [ref=e218] [cursor=pointer]:
+                  - /url: /how-we-work
+                  - generic [ref=e219]:
+                    - img [ref=e222]
+                    - text: How We Work
+              - listitem [ref=e226]:
+                - link "Procurement" [ref=e227] [cursor=pointer]:
+                  - /url: /procurement
+                  - generic [ref=e228]:
+                    - img [ref=e231]
+                    - text: Procurement
+              - listitem [ref=e237]:
+                - link "Security" [ref=e238] [cursor=pointer]:
+                  - /url: /security
+                  - generic [ref=e239]:
+                    - img [ref=e242]
+                    - text: Security
+              - listitem [ref=e244]:
+                - link "Insights" [ref=e245] [cursor=pointer]:
+                  - /url: /insights
+                  - generic [ref=e246]:
+                    - img [ref=e249]
+                    - text: Insights
+              - listitem [ref=e251]:
+                - link "About" [ref=e252] [cursor=pointer]:
+                  - /url: /about
+                  - generic [ref=e253]:
+                    - img [ref=e256]
+                    - text: About
+              - listitem [ref=e258]:
+                - link "Legal" [ref=e259] [cursor=pointer]:
+                  - /url: /legal
+                  - generic [ref=e260]:
+                    - img [ref=e263]
+                    - text: Legal
+              - listitem [ref=e267]:
+                - link "Contact" [ref=e268] [cursor=pointer]:
+                  - /url: /contact
+                  - generic [ref=e269]:
+                    - img [ref=e272]
+                    - text: Contact
+          - generic [ref=e275]:
+            - generic [ref=e276]: Partners & Experts
+            - list [ref=e278]:
+              - listitem [ref=e279]:
+                - link "Join the network" [ref=e280] [cursor=pointer]:
+                  - /url: /partners
+                  - generic [ref=e281]:
+                    - img [ref=e284]
+                    - text: Join the network
+              - listitem [ref=e289]:
+                - link "How it works" [ref=e290] [cursor=pointer]:
+                  - /url: /partners#how
+                  - generic [ref=e291]:
+                    - img [ref=e294]
+                    - text: How it works
+              - listitem [ref=e297]:
+                - link "Roles" [ref=e298] [cursor=pointer]:
+                  - /url: /partners#roles
+                  - generic [ref=e299]:
+                    - img [ref=e302]
+                    - text: Roles
+              - listitem [ref=e306]:
+                - link "Company partners" [ref=e307] [cursor=pointer]:
+                  - /url: /partners#companies
+                  - generic [ref=e308]:
+                    - img [ref=e311]
+                    - text: Company partners
+      - generic [ref=e315]:
+        - generic [ref=e316]:
+          - text: Copyright 2026 Lucien. All rights reserved.
+          - generic [ref=e317]: Engagements are subject to lawful use and risk-managed delivery.
+        - generic [ref=e318]: "Domain: lucien.technology"
+  - generic [active]:
+    - generic [ref=e321]:
+      - generic [ref=e322]:
+        - generic [ref=e323]:
+          - navigation [ref=e324]:
+            - button "previous" [disabled] [ref=e325]:
+              - img "previous" [ref=e326]
+            - generic [ref=e328]:
+              - generic [ref=e329]: 1/
+              - text: "1"
+            - button "next" [disabled] [ref=e330]:
+              - img "next" [ref=e331]
+          - img
+        - generic [ref=e333]:
+          - link "Next.js 16.1.1 (stale) Turbopack" [ref=e334] [cursor=pointer]:
+            - /url: https://nextjs.org/docs/messages/version-staleness
+            - img [ref=e335]
+            - generic "There is a newer version (16.1.6) available, upgrade recommended!" [ref=e337]: Next.js 16.1.1 (stale)
+            - generic [ref=e338]: Turbopack
+          - img
+      - dialog "Build Error" [ref=e340]:
+        - generic [ref=e343]:
+          - generic [ref=e344]:
+            - generic [ref=e345]:
+              - generic [ref=e347]: Build Error
+              - generic [ref=e348]:
+                - button "Copy Error Info" [ref=e349] [cursor=pointer]:
+                  - img [ref=e350]
+                - button "No related documentation found" [disabled] [ref=e352]:
+                  - img [ref=e353]
+                - button "Attach Node.js inspector" [ref=e355] [cursor=pointer]:
+                  - img [ref=e356]
+            - generic [ref=e365]: Parsing ecmascript source code failed
+          - generic [ref=e367]:
+            - generic [ref=e369]:
+              - img [ref=e371]
+              - generic [ref=e374]: ./app/portal/hr/page.tsx (812:66)
+              - button "Open in editor" [ref=e375] [cursor=pointer]:
+                - img [ref=e377]
+            - generic [ref=e380]:
+              - generic [ref=e381]: Parsing ecmascript source code failed
+              - generic [ref=e382]: 810 |
+              - text: />
+              - generic [ref=e383]: 811 |
+              - text: <StatusBadge >
+              - generic [ref=e384]: 812 |
+              - generic [ref=e385]: label
+              - text: "={"
+              - generic [ref=e386]: "`${emailJobs.filter((job) => job.status === \\\"QUEUED\\\").length} emails queued`"
+              - generic [ref=e387]: "}"
+              - generic [ref=e388]: "|"
+              - text: ^
+              - generic [ref=e389]: 813 |
+              - generic [ref=e390]: tone
+              - text: ="neutral"
+              - generic [ref=e391]: 814 |
+              - generic [ref=e392]: variant
+              - text: ="outline"
+              - generic [ref=e393]: 815 |
+              - text: />
+              - generic [ref=e394]: Expected unicode escape
+        - generic [ref=e395]: "1"
+        - generic [ref=e396]: "2"
+    - generic [ref=e401] [cursor=pointer]:
+      - button "Open Next.js Dev Tools" [ref=e402]:
+        - img [ref=e403]
+      - button "Open issues overlay" [ref=e407]:
+        - generic [ref=e408]:
+          - generic [ref=e409]: "0"
+          - generic [ref=e410]: "1"
+        - generic [ref=e411]: Issue
+  - alert [ref=e412]
+```

@@ -1,0 +1,3 @@
+{
+  "/marketplace/[slug]/page": "app/marketplace/[slug]/page.js"
+}

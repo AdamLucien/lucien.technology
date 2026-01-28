@@ -1,0 +1,3 @@
+Contact: mailto:company@lucien.technology
+Preferred-Languages: en, cs
+Policy: https://lucien.technology/security

@@ -1,0 +1,13 @@
+Third-Party Notices
+
+This product includes open source software dependencies. License texts and attributions are provided in the respective packages and the package-lock.json file.
+
+Key dependencies include (non-exhaustive):
+- Next.js
+- React
+- Tailwind CSS
+- Prisma
+- Stripe SDK
+- Framer Motion
+- NextAuth (Auth.js)
+- Nodemailer

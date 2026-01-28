@@ -1,0 +1,687 @@
+# Lucien2026 — Complete System Documentation  
+## Single Integrated Flow (Canonical) — ONE SYSTEM, ONE VALUE STREAM
+
+This document is the single source of truth for the Lucien2026 project.  
+It describes the *entire* system end-to-end: Marketplace → Intake → Scope → Delivery → Finance → Talent/HR → Feedback loops.
+
+**Important framing (non-negotiable):**  
+Neexistují zde „oddělené moduly“ typu Marketplace / Intake / HR / Delivery.  
+Existuje **JEDEN TOK HODNOTY** a různé **POHLEDY** (UI + workflow stages) na tentýž tok.
+
+Designed to be:
+- Human-readable
+- AI-Codex-readable
+- i18n-ready (cs/en/de/it/uk/zh)
+- Visualizable via Mermaid diagrams
+- Operationally useful (runbooks + troubleshooting)
+
+---
+
+## Table of Contents
+1) Principles & Guardrails  
+2) The One Value Stream (Root Flow)  
+3) Perspectives (Public / Client / Internal)  
+4) Actors, Roles, and Permissions  
+5) Information Architecture (Routes + surfaces)  
+6) End-to-End UI Flow (What users see)  
+7) Marketplace + AI-Assisted Intake (Concierge + Control Room)  
+8) Request Scope → Inquiry → ScopeProposal → Engagement  
+9) Delivery System (Tasks, terms, time, evidence)  
+10) Finance System (Invoice, payments, audit readiness)  
+11) Talent System (Partners/Experts → HR → Assignments)  
+12) Staffing & Capacity (how staffing connects to engagements)  
+13) API Contracts (stable interfaces)  
+14) Data Model (Prisma entities + relations — canonical map)  
+15) State Machines (canonical lifecycles)  
+16) i18n Strategy (keys, locales, translation workflow)  
+17) Feature Flags & Environments  
+18) Observability, Audit, Telemetry  
+19) Local Development Runbook  
+20) Deployment Runbook  
+21) Troubleshooting  
+22) Conventions (UX + code)  
+23) Backlog / Next Steps  
+24) Implementation Tracker (where we are right now)  
+Appendix A) One Diagram: “Everything Flow”  
+Appendix B) Glossary  
+
+---
+
+# 1) Principles & Guardrails
+
+## 1.1 Product truth
+- **Marketplace is the entry surface**: all services/packages remain discoverable at all times.
+- **Every engagement begins with paid scoping** (ScopeProposal). No exceptions.
+- **Deterministic first**: heuristics/scoring before any LLM automation.
+- **Auditability**: important business actions must be traceable (AuditEvent).
+- **Enterprise UX**: calm, minimal, trustworthy; micro-interactions only; mobile-first; respects reduced motion.
+- **Internationalization readiness**: UI strings are `t("...")`; API returns keys/ids, not prose.
+
+## 1.2 Engineering guardrails
+- **Do not break existing service grid (24 packages)**. Intake is additive overlay.
+- **Avoid heavy refactors**: minimal additive changes; stable routes.
+- **Optional persistence/automation must be feature-flagged** so local dev never breaks.
+- **Fail-soft**: if optional tables/flags are missing, UI still runs.
+
+---
+
+# 2) The One Value Stream (Root Flow of Everything)
+
+Celý systém Lucien2026 je postaven na tomto jediném toku:
+
+```mermaid
+flowchart TD
+
+A[Problem appears] --> B[Marketplace surface]
+B --> C[Intake assist (optional)]
+C --> D[Recommendation + Confidence]
+D --> E[Request Scope]
+E --> F[Inquiry]
+F --> G[Internal Triage]
+G --> H[ScopeProposal]
+H -->|Paid| I[Engagement]
+I --> J[Delivery]
+J --> K[Outcome]
+K --> L[Feedback]
+L --> BInterpretace:
+	•	Marketplace je „povrch“ – místo, kde se tok dotkne světa.
+	•	Intake je asistivní vrstva – nezastavuje tok, jen ho zrychluje a zpřesňuje.
+	•	HR/Talent není oddělený modul – je to zajištění kapacity uvnitř téhož toku.
+	•	Finance = ověření hodnoty (kontrakt → fakturace → platba).
+	•	Feedback uzavírá smyčku a zlepšuje nabídku i heuristiky.
+
+⸻
+
+3) Perspectives (Public / Client / Internal)
+
+Níže jsou perspektivy, ne moduly.
+
+3.1 Public perspective (Visitor/Client — public web)
+	•	Browse Marketplace (24 packages always visible)
+	•	Optional intake assist
+	•	Request scope form (public)
+
+3.2 Client perspective (Client Portal)
+	•	Their inquiries/scopes/engagements
+	•	Documents & delivery status (only shared/allowed)
+	•	Finance view (invoices/payments where allowed)
+
+3.3 Internal perspective (Lucien Portal)
+	•	Intake triage + scope proposals
+	•	HR / talent pool management
+	•	Staffing assignments to engagements
+	•	Delivery governance (tasks, time approvals, terms)
+	•	Finance governance + audit readiness
+
+⸻
+
+4) Actors, Roles, and Permissions
+
+4.1 Actors
+	•	Visitor (anonymous): Marketplace, intake, request scope.
+	•	Client User (authenticated): sees own org inquiries/scopes/engagements.
+	•	Lucien Operator: delivery/ops role; manages tasks/time/terms for engagements.
+	•	Lucien Admin: HR/triage/governance; can manage talent + assignments.
+
+4.2 Permission principles
+	•	Least privilege: client sees only their org; internal sees per role scope.
+	•	Dual visibility: many objects have internal vs shared exposure.
+	•	Data partitioning: org-scoped by default; admin overrides only when explicitly required.
+
+4.3 Visibility flags (canonical)
+	•	TalentAssignment.sharedWithClient → appears in client engagement view.
+	•	EngagementMember.visibleToClient (or equivalent) → client-visible staffing.
+	•	Documents (if model exists): internal vs shared.
+	•	Notes: internal by default unless explicitly marked shareable.
+
+⸻
+
+5) Information Architecture (Routes + Surfaces)
+
+5.1 Public site routes
+	•	/marketplace — browse services + intake overlay
+	•	/marketplace/[slug] — service detail
+	•	/request-scope — public scope request form (prefill capable)
+	•	/partners — public Partners & Experts funnel
+
+5.2 Portal routes (authenticated)
+	•	/portal — dashboard
+	•	/portal/inquiries — inquiries list
+	•	/portal/scopes — scope proposals workflow
+	•	/portal/engagements — engagement list and detail
+	•	/portal/hr — HR & talent (internal)
+	•	Admin surfaces (if present): orgs/users/danger pagesflowchart LR
+
+V[Visitor] --> MP[/marketplace]
+MP --> GRID[Service grid (24 packages always visible)]
+MP --> INTAKE[Intake panel (optional)]
+INTAKE --> RES[Results panel (Concierge + Control Room)]
+RES --> RS[/request-scope (prefilled)]
+RS --> INQ[Inquiry created]
+
+INQ -->|internal| TRIAGE[Internal triage]
+TRIAGE --> SCOPE[ScopeProposal sent to client]
+SCOPE -->|client accepts + paid| ENG[Engagement starts]
+
+ENG --> DEL[Delivery (tasks/terms/time)]
+DEL --> FIN[Finance (invoice/payment)]
+FIN --> FB[Feedback]
+FB --> MP7) Marketplace + AI-Assisted Intake (Concierge + Control Room)
+
+7.1 Non-destructive rule (critical)
+
+Marketplace always shows all 24 packages. Intake does not remove browsing or hide cards.
+
+7.2 Intake input
+
+User provides:
+	•	brief (<= 777 words)
+	•	constraints (remote/onsite/hybrid, procurement/compliance)
+	•	urgency/timeframe hints
+
+7.3 Intake output must be TWO LAYERS
+
+LAYER 1 — Consulting Concierge (default)
+
+User-facing:
+	•	distilled summary (chips)
+	•	primary recommendation (hero)
+	•	secondary recommendations
+	•	next steps progression: shortlist → scope draft → request scope
+
+LAYER 2 — Control Room (optional)
+
+Transparency:
+	•	telemetry chips (tags/constraints/context/urgency)
+	•	scoring breakdown (top candidates with scores)
+	•	triage signals
+	•	staffing preview (roles/domains as chips)flowchart TD
+
+BRIEF[Brief entered] --> ANALYZE[Analyze (stepper)]
+ANALYZE --> CONC[Concierge result panel]
+CONC --> HERO[Primary recommendation (hero)]
+CONC --> MORE[Secondary recommendations]
+
+HERO --> SHORT[Shortlist]
+MORE --> SHORT
+
+SHORT --> SHEET[Generate scope draft (modal/bottom sheet)]
+SHEET --> CONTINUE[Continue to /request-scope (prefilled)]7.5 “Wow” rules (enterprise)
+	•	Motion is subtle: fade + translate <= 10px, 200–260ms, ease-out.
+	•	Reduced-motion: stepper becomes static; no stagger.
+	•	Mobile-first: shortlist is a bottom sheet/drawer; touch targets >= 44px.
+	•	Animate only on state transition analyzing → done (not every rerender).
+
+7.6 Intake API response rules
+	•	API returns keys/ids; UI translates via t().
+	•	API must not return hardcoded English prose as “reasons”.
+
+Canonical response contract:
+	•	summary: { text, tags, urgency, constraints, context }
+	•	recommendations[]: { slug, fit, confidence, reasons[], nextAction }
+	•	optional advanced fields:
+	•	telemetry
+	•	scoring[]
+	•	triageSignals[]
+	•	staffingHint
+
+Canonical error contract:
+	•	{ messageKey: "marketplace.intake.error.<...>" }
+
+⸻
+
+8) Request Scope → Inquiry → ScopeProposal → Engagement
+
+8.1 Request Scope (public)
+
+Purpose: convert the brief + selected service(s) into a captured Inquiry.
+
+Prefill sources:
+	•	intake summaryDraft (editable)
+	•	selected slugs (shortlist or primary recommendation)
+	•	inferred timeframe (from urgency)
+	•	inferred mode (remote/onsite/hybrid hints)
+
+8.2 Inquiry (internal reality)
+
+Represents “we received something that must be triaged and scoped”.
+
+8.3 Internal triage
+	•	confirm fit
+	•	define the scoping approach
+	•	decide required staffing capabilities
+	•	produce a ScopeProposal
+
+8.4 ScopeProposal (paid scoping artifact)
+	•	scope boundaries
+	•	deliverables of scoping (not the final delivery)
+	•	timeline and delivery mode
+	•	pricing/payment terms
+	•	acceptance & next steps
+
+8.5 Engagement (after paid scope acceptance)
+
+Engagement is the delivery container:
+	•	delivery plan
+	•	staffing assignments
+	•	tasks/milestones/time
+	•	documents and evidence
+	•	invoicing and payments
+
+⸻
+
+9) Delivery System (Tasks, Terms, Time, Evidence)
+
+Delivery exists to enforce clarity and audit readiness.
+
+9.1 Canonical delivery objects
+	•	EngagementTerm: contractual anchors (what is in/out, cadence).
+	•	DeliveryTask: work items with statuses.
+	•	TimeEntry: logged hours with approval.
+	•	Documents (if present): outputs and evidence.
+
+9.2 Delivery flowflowchart TD
+
+ENG[Engagement] --> PLAN[Delivery planning]
+PLAN --> TERMS[Contract terms]
+PLAN --> TASKS[Tasks / milestones]
+TASKS --> TIME[Time entries]
+TIME --> APPROVAL[Approvals]
+TASKS --> OUTPUT[Deliverables / outcomes]
+OUTPUT --> EVIDENCE[Evidence + audit trail]10) Finance System (Invoice, Payment, Audit Readiness)
+
+Finance is part of the same value stream, not a separate module.
+
+10.1 Finance flowflowchart TD
+
+ENG[Engagement] --> INV[Invoice]
+INV --> PAY[Payment]
+PAY --> REV[Revenue / reporting]
+REV --> AUDIT[Audit readiness]10.2 Rules
+	•	invoices tie to engagements (and/or scopes if scoped billing exists)
+	•	payments are immutable events with traceability
+
+⸻
+
+11) Talent System (Partners/Experts → HR → Assignments)
+
+11.1 Talent sources
+	•	public partners funnel (/partners)
+	•	internal portal entry (admin-only, optional)
+
+11.2 Talent lifecycleflowchart TD
+
+FORM[Partners form] --> NEW[TalentProfile: NEW]
+NEW --> REVIEWED[TalentProfile: REVIEWED]
+REVIEWED --> APPROVED[TalentProfile: APPROVED]
+REVIEWED --> ARCHIVED[TalentProfile: ARCHIVED]
+
+APPROVED --> ASSIGN[TalentAssignment]
+ASSIGN --> ENG[Engagement]11.3 HR view requirements (based on current UI need)
+	•	List with filters (status, domain)
+	•	Clicking a talent card reliably opens detail view (query param ?talent=<id>)
+	•	Detail shows:
+	•	roles/domains/seniority
+	•	availability + engagement modes
+	•	contact status + notes
+	•	signal history
+	•	assignments list
+	•	create assignment to engagement form
+
+⸻
+
+12) Staffing & Capacity (How staffing connects to engagements)
+
+Staffing is not separate; it is the internal “capacity mechanism” of the value stream.
+
+12.1 Staffing inputs
+	•	Intake tags (heuristics)
+	•	Inquiry triage decisions
+	•	Scope requirements
+	•	Talent pool availability
+
+12.2 Assignment requirements (canonical)
+
+Assignment includes:
+	•	engagementId (nullable if preallocation planning)
+	•	roleLabel (human meaning)
+	•	allocationPct (0–100)
+	•	startDate/endDate (optional)
+	•	sharedWithClient flag
+
+12.3 Unified staffing view on engagement
+
+Engagement staffing should unify:
+	•	internal members (EngagementMember)
+	•	external/partner talent assignments (TalentAssignment → TalentProfile)flowchart LR
+
+ENG[Engagement] --> EM[EngagementMembers]
+ENG --> TA[TalentAssignments]
+TA --> TP[TalentProfile]
+EM --> USER[User]12.4 Intake → Staffing heuristics (preview)
+
+Control Room can show staffing hint without DB:
+	•	tags -> roles/domains
+	•	example:
+	•	security + governance → security architect + governance lead
+	•	OT/ICS + industry4 → OT engineer + systems architect
+	•	supply chain + integration → integration engineer + process architect
+
+⸻
+
+13) API Contracts (Stable Interfaces)
+
+13.1 Marketplace intake
+	•	POST /api/marketplace/intake
+	•	input: { brief, locale, mode, sessionKey? }
+	•	output:
+	•	summary
+	•	recommendations
+	•	optional: telemetry, scoring, triageSignals, staffingHint
+	•	optional: draftId if persistence enabled
+
+13.2 Draft persistence (feature-flagged)
+	•	POST /api/marketplace/intake/draft
+	•	input: { brief, locale, mode, summary, recommendations, shortlist }
+	•	output: { ok: true, draftId }
+
+13.3 Intake telemetry
+	•	POST /api/marketplace/intake/event
+	•	input: { sessionKey, eventType, payloadJson, draftId? }
+	•	output: { ok: true }
+
+13.4 Partners signal intake
+	•	POST /api/partners/signal
+	•	upsert TalentProfile, append TalentSignal
+
+⸻
+
+14) Data Model (Canonical Prisma Map)
+
+This section is a conceptual canonical map; exact schema may vary, but relationships must hold.erDiagram
+
+ORG ||--o{ USER : has
+ORG ||--o{ INQUIRY : owns
+ORG ||--o{ ENGAGEMENT : owns
+
+SERVICE ||--o{ INQUIRY : selected_service
+INQUIRY ||--o{ SCOPEPROPOSAL : scoping
+SCOPEPROPOSAL ||--o{ ENGAGEMENT : accepted_scope
+
+ENGAGEMENT ||--o{ DELIVERYTASK : work_items
+ENGAGEMENT ||--o{ TIMEENTRY : time_tracking
+ENGAGEMENT ||--o{ INVOICE : billing
+INVOICE ||--o{ PAYMENT : payments
+
+TALENTPROFILE ||--o{ TALENTSIGNAL : signals
+TALENTPROFILE ||--o{ TALENTASSIGNMENT : assignments
+ENGAGEMENT ||--o{ TALENTASSIGNMENT : staffing
+
+USER ||--o{ AUDITEVENT : actionsCanonical “optional persistence” additions:
+	•	InquiryDraft (pre-inquiry capture)
+	•	IntakeEvent (telemetry)
+	•	EmailJob (outbox queue)
+	•	StaffingRecommendation (triage/staffing signal container)
+
+⸻
+
+15) State Machines (Canonical Lifecycles)
+
+15.1 Inquiry
+	•	DRAFT → SUBMITTED → CONVERTED → CLOSED
+
+15.2 ScopeProposal
+	•	DRAFT → SENT → PAID → EXPIRED/REJECTED
+
+15.3 Engagement (typical)
+	•	ACTIVE → ON_HOLD → COMPLETE → ARCHIVED
+
+15.4 TalentProfile
+	•	NEW → REVIEWED → APPROVED → ARCHIVED
+
+15.5 TalentAssignment
+	•	Date-bounded; effectively ACTIVE → ENDED
+
+⸻
+
+16) i18n Strategy (cs/en/de/it/uk/zh)
+
+16.1 Rules
+	•	No hardcoded user-facing strings in components.
+	•	UI uses t("key").
+	•	API returns keys/ids, UI translates.
+
+16.2 Key hierarchy conventions
+	•	marketplace.intake.concierge.*
+	•	marketplace.intake.control.*
+	•	marketplace.intake.reason.*
+	•	marketplace.intake.signal.*
+	•	partners.*
+	•	portal.hr.talent.*
+	•	portal.engagements.* (if needed)
+	•	common.* for shared UI labels
+
+16.3 Translation workflow
+	1.	Add keys in EN baseline
+	2.	Export key list to translators
+	3.	Fill cs/de/it/uk/zh
+	4.	Validate missing keys (optional CI rule)
+
+⸻
+
+17) Feature Flags & Environments
+
+Must default to safe OFF and never break local dev.
+	•	NEXT_PUBLIC_INTAKE_PERSIST=0|1
+	•	ENABLE_EMAIL=0|1
+	•	optional: EMAIL_SINK=console for dev
+
+⸻
+
+18) Observability, Audit, Telemetry
+
+18.1 AuditEvent (governance)
+
+Record sensitive actions:
+	•	triage decisions
+	•	scope proposal send/paid status changes
+	•	privileged talent changes
+	•	staffing assignments create/update/delete
+
+18.2 Intake telemetry events
+
+Event types (canonical):
+	•	VIEW
+	•	SUBMIT (intake submit)
+	•	RESULTS_SHOWN
+	•	SHORTLIST_ADD / SHORTLIST_REMOVE
+	•	CONTINUE_TO_SCOPE
+	•	ERROR
+
+Telemetry must be safe:
+	•	no secrets
+	•	minimal personal data
+	•	store payloadJson responsibly
+
+⸻
+
+19) Local Development Runbook
+
+Quality gates (always):
+	•	npm run lint
+	•	npm run build
+	•	npx prisma validate
+	•	npx prisma generate
+	•	npx prisma migrate dev (when DB features enabled)
+
+Typical local chain:
+	•	docker compose up -d
+	•	npx prisma migrate dev
+	•	npm run dev
+
+Smoke checks:
+	•	/marketplace (service grid + intake)
+	•	/request-scope
+	•	/portal/hr (talent list + detail selection works)
+	•	/portal/engagements (staffing view + tasks/time)
+
+⸻
+
+20) Deployment Runbook (High level)
+	•	Build must be clean: npm run build
+	•	DB migrations must be applied prior to serving traffic
+	•	Feature flags must be explicitly set per environment
+	•	Rollback plan: revert deploy + revert migrations (if necessary) or forward-fix
+
+⸻
+
+21) Troubleshooting
+
+21.1 Prisma / DB
+	•	Run npx prisma validate for schema errors
+	•	Run npx prisma migrate status for drift
+	•	Ensure DATABASE_URL matches actual DB
+
+21.2 UI
+	•	Missing icons: confirm components/icons/iconMap names
+	•	Mobile layout breaks: ensure sticky columns collapse, bottom sheets behave
+	•	Intake jitter: animate only on state transition; respect reduced motion
+
+21.3 “Tables missing” safety
+
+If feature flags are OFF:
+	•	app must not crash due to missing draft/event/email tables
+	•	persistence routes should be disabled or return 503 safely
+
+⸻
+
+22) Conventions (UX + Code)
+
+22.1 Design system
+	•	surface-card, bg-soft, border-line
+	•	text-slate, text-ash, text-muted
+	•	rounded corners, calm gradients, low noise
+
+22.2 Motion
+	•	subtle only; reduced-motion aware
+	•	no infinite spinners; stepper is short & calm
+
+22.3 Intake UX contract
+	•	never blocks browsing
+	•	always allows user to proceed to request scope even with weak match
+	•	transparency available (Control Room) without overwhelming
+
+⸻
+
+23) Backlog / Next Steps (Hard reality)
+
+Two high-leverage directions:
+
+23.1 Intake → staffing heuristics (conversion + delivery readiness)
+	•	improve tag extraction and domain/role mapping
+	•	triage signals and transparency
+	•	“find matching talent” workflows
+	•	reduce time-to-scope and time-to-staffing
+
+23.2 Revenue & capacity model (economic reality)
+	•	compute: project pricing vs staffing cost vs overhead vs founder income
+	•	simulate pipeline volume needed (leads → scopes → engagements)
+	•	link staffing availability to sales constraints
+
+Recommendation: do both, start with intake→staffing to tighten delivery, then model revenue/capacity for realism.
+
+⸻
+
+24) Implementation Tracker (Where we are right now)
+
+Fill continuously.
+
+Marketplace intake
+	•	Concierge UI: [TBD]
+	•	Control Room UI: [TBD]
+	•	Deterministic scoring: [TBD]
+	•	Mobile shortlist sheet: [TBD]
+	•	Prefill to /request-scope: [TBD]
+
+Persistence (optional)
+	•	InquiryDraft model: [TBD]
+	•	IntakeEvent telemetry: [TBD]
+	•	StaffingRecommendation: [TBD]
+
+HR/Talent
+	•	Talent list + filters: [TBD]
+	•	Talent click → detail panel reliable: [TBD]
+	•	Create assignments: [TBD]
+	•	Engagement staffing unified view: [TBD]
+
+Email automation (safe stub)
+	•	EmailJob queue: [TBD]
+	•	Template keys: [TBD]
+	•	Dev sink: [TBD]
+
+Quality gates
+	•	npm run lint: [TBD]
+	•	npm run build: [TBD]
+	•	npx prisma migrate status: [TBD]
+
+⸻
+
+Appendix A — One Diagram: “Everything Flow” (Single Integrated Flow)flowchart TD
+
+%% ROOT VALUE STREAM
+A[Problem appears] --> B[Marketplace surface]
+
+%% MARKETPLACE
+B --> SVC[Browse Services (24 packages visible)]
+B --> INTAKE[Intake assist (optional)]
+
+%% INTAKE RESULT LAYERS
+INTAKE --> REC[Recommendation + Confidence]
+REC --> CONCIERGE[Consulting Concierge (default)]
+REC --> CONTROL[Control Room (optional)]
+
+%% CONVERSION
+REC --> RS[Request Scope]
+RS --> INQ[Inquiry]
+INQ --> TRIAGE[Internal triage]
+TRIAGE --> SCOPE[ScopeProposal]
+
+%% SCOPE OUTCOME
+SCOPE -->|Paid| ENG[Engagement]
+SCOPE -->|Rejected/Expired| CLOSED[Closed]
+
+%% STAFFING
+TRIAGE --> STAFFNEED[Staffing needs detected]
+STAFFNEED --> TALENTPOOL[Talent pool]
+TALENTPOOL --> TALENT[TalentProfile]
+TALENT --> ASSIGN[TalentAssignment]
+ASSIGN --> ENG
+
+%% DELIVERY
+ENG --> PLAN[Delivery planning]
+PLAN --> TASKS[Tasks / Milestones / Deliverables]
+TASKS --> TIME[Time entries + approvals]
+TASKS --> DOCS[Documents + evidence]
+TASKS --> OUTCOME[Delivered outcome]
+
+%% FINANCE
+ENG --> INVOICE[Invoice]
+INVOICE --> PAYMENT[Payment]
+PAYMENT --> REVENUE[Revenue + reporting]
+
+%% FEEDBACK LOOPS
+OUTCOME --> FEEDBACK[Feedback + signals]
+FEEDBACK --> B
+FEEDBACK --> INTAKE
+FEEDBACK --> TALENTPOOLAppendix B — Glossary
+	•	Service: marketplace package (the 24 offerings).
+	•	Intake: assistive mapping from brief → recommended path.
+	•	Concierge: user-facing result layer with next steps.
+	•	Control Room: transparency layer with telemetry/scoring/triage.
+	•	Inquiry: captured request for scoping.
+	•	ScopeProposal: paid scoping contract + definition of delivery boundaries.
+	•	Engagement: delivery container (work, staffing, billing).
+	•	TalentProfile: expert record (partners funnel or internal).
+	•	TalentAssignment: allocation of talent to an engagement (with visibility flag).
+	•	AuditEvent: immutable record of sensitive actions.
+	•	EmailJob: provider-agnostic queued email outbox record.

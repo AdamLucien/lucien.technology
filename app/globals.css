@@ -1,0 +1,277 @@
+@import "tailwindcss";
+
+:root {
+  --ink-900: #0f0f10;
+  --ink-800: #17181b;
+  --ink-600: #2b2c30;
+  --ink-100: #f5f5f7;
+  --paper-100: #fafafa;
+  --paper-300: #e1e1e5;
+  --ink: var(--ink-900);
+  --paper: var(--paper-100);
+  --slate: #c2c2c6;
+  --line: #1e1f22;
+  --soft: #121315;
+  --muted: #9a9aa2;
+  --badge-success-text: #a7f0c8;
+  --badge-success-border: rgba(46, 196, 132, 0.5);
+  --badge-success-bg: rgba(32, 96, 68, 0.35);
+  --badge-success-soft: rgba(46, 196, 132, 0.16);
+  --badge-info-text: #a8c9ff;
+  --badge-info-border: rgba(92, 140, 255, 0.5);
+  --badge-info-bg: rgba(52, 82, 150, 0.35);
+  --badge-info-soft: rgba(92, 140, 255, 0.16);
+  --badge-warning-text: #ffd59b;
+  --badge-warning-border: rgba(255, 187, 92, 0.55);
+  --badge-warning-bg: rgba(140, 92, 30, 0.35);
+  --badge-warning-soft: rgba(255, 187, 92, 0.16);
+  --badge-danger-text: #ffb0b0;
+  --badge-danger-border: rgba(255, 99, 99, 0.55);
+  --badge-danger-bg: rgba(140, 40, 40, 0.35);
+  --badge-danger-soft: rgba(255, 99, 99, 0.16);
+  --badge-neutral-text: #c9c9cf;
+  --badge-neutral-border: rgba(194, 194, 198, 0.35);
+  --badge-neutral-bg: rgba(82, 84, 92, 0.32);
+  --badge-neutral-soft: rgba(140, 140, 150, 0.16);
+  --badge-access-text: #cdd5df;
+  --badge-access-border: rgba(150, 160, 175, 0.45);
+  --badge-access-bg: rgba(70, 78, 92, 0.32);
+  --badge-access-soft: rgba(150, 160, 175, 0.16);
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-ash: var(--paper);
+  --color-slate: var(--slate);
+  --color-line: var(--line);
+  --color-soft: var(--soft);
+  --color-muted: var(--muted);
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-ash: var(--paper);
+  --color-slate: var(--slate);
+  --color-line: var(--line);
+  --color-soft: var(--soft);
+  --color-muted: var(--muted);
+  --font-sans: var(--font-jakarta);
+}
+
+* {
+  border-color: var(--color-line);
+}
+
+body {
+  background: var(--color-ink);
+  color: var(--color-ash);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+::selection {
+  background: rgba(250, 250, 250, 0.12);
+  color: var(--color-ash);
+}
+
+a {
+  color: inherit;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 999px;
+  border: 1px solid var(--badge-border);
+  padding: 0.3rem 0.6rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--badge-text);
+}
+
+.badge--solid {
+  background: var(--badge-bg);
+}
+
+.badge--soft {
+  background: var(--badge-soft-bg);
+}
+
+.badge--outline {
+  background: transparent;
+}
+
+.badge--success {
+  --badge-text: var(--badge-success-text);
+  --badge-border: var(--badge-success-border);
+  --badge-bg: var(--badge-success-bg);
+  --badge-soft-bg: var(--badge-success-soft);
+}
+
+.badge--info {
+  --badge-text: var(--badge-info-text);
+  --badge-border: var(--badge-info-border);
+  --badge-bg: var(--badge-info-bg);
+  --badge-soft-bg: var(--badge-info-soft);
+}
+
+.badge--warning {
+  --badge-text: var(--badge-warning-text);
+  --badge-border: var(--badge-warning-border);
+  --badge-bg: var(--badge-warning-bg);
+  --badge-soft-bg: var(--badge-warning-soft);
+}
+
+.badge--danger {
+  --badge-text: var(--badge-danger-text);
+  --badge-border: var(--badge-danger-border);
+  --badge-bg: var(--badge-danger-bg);
+  --badge-soft-bg: var(--badge-danger-soft);
+}
+
+.badge--neutral {
+  --badge-text: var(--badge-neutral-text);
+  --badge-border: var(--badge-neutral-border);
+  --badge-bg: var(--badge-neutral-bg);
+  --badge-soft-bg: var(--badge-neutral-soft);
+}
+
+.badge--access {
+  --badge-text: var(--badge-access-text);
+  --badge-border: var(--badge-access-border);
+  --badge-bg: var(--badge-access-bg);
+  --badge-soft-bg: var(--badge-access-soft);
+}
+
+.card-animate {
+  transition: transform 200ms ease, border-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.surface-card {
+  border-color: rgba(30, 31, 34, 0.7);
+  box-shadow: none;
+}
+
+.card-animate:is(a, button, [role="button"], [role="link"]):hover,
+.card-animate:focus-within {
+  transform: translateY(-2px);
+  border-color: var(--color-slate);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+}
+
+.card-animate:is(a, button, [role="button"], [role="link"]):active {
+  transform: translateY(-1px);
+  border-color: var(--color-slate);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(250, 250, 250, 0.08);
+}
+
+.card-animate:is(a, button, [role="button"], [role="link"]):focus-visible {
+  outline: none;
+  border-color: var(--color-slate);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22),
+    0 0 0 1px rgba(250, 250, 250, 0.12);
+}
+
+.btn-animate {
+  transition: transform 200ms ease, background-color 200ms ease,
+    border-color 200ms ease, color 200ms ease, box-shadow 200ms ease;
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+}
+
+.btn-animate:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.22);
+}
+
+.btn-animate:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+}
+
+button:disabled,
+.btn-animate:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.btn-primary {
+  background-color: var(--ink-900);
+  color: var(--paper-100);
+  border: 1px solid var(--ink-600);
+}
+
+.btn-primary:hover {
+  background-color: var(--ink-800);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--ink-100);
+  border: 1px solid var(--ink-600);
+}
+
+.btn-secondary:hover {
+  background-color: rgba(23, 24, 27, 0.4);
+}
+
+input,
+textarea,
+select {
+  background-color: var(--color-soft);
+  color: var(--color-ash);
+  border: 1px solid var(--color-line);
+  color-scheme: dark;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-muted);
+  opacity: 0.7;
+}
+
+select {
+  appearance: none;
+  padding-right: 2.5rem;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23c2c2c6' stroke-width='1.5'><path d='M6 8l4 4 4-4'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 16px 16px;
+}
+
+select option {
+  background-color: var(--color-ink);
+  color: var(--color-ash);
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--paper-300);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-animate {
+    transition: none;
+  }
+
+  .btn-animate:hover,
+  .btn-animate:active {
+    transform: none;
+  }
+
+  .card-animate,
+  .card-animate:is(a, button, [role="button"], [role="link"]):hover,
+  .card-animate:is(a, button, [role="button"], [role="link"]):active,
+  .card-animate:focus-within,
+  .card-animate:is(a, button, [role="button"], [role="link"]):focus-visible {
+    transition: none;
+    transform: none;
+    box-shadow: none;
+  }
+}

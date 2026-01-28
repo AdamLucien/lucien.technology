@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///Users/adamkarllucien/Lucien_technology/lucien.technology/app/portal/loading.tsx"],"sourcesContent":["export default function PortalLoading() {\n  return (\n    <div className=\"space-y-6\">\n      <div className=\"h-6 w-48 rounded-full bg-soft\" />\n      <div className=\"grid gap-4 md:grid-cols-3\">\n        {Array.from({ length: 3 }).map((_, index) => (\n          <div\n            key={`card-${index}`}\n            className=\"h-28 rounded-2xl border border-line/80 bg-soft\"\n          />\n        ))}\n      </div>\n      <div className=\"h-64 rounded-2xl border border-line/80 bg-soft\" />\n    </div>\n  );\n}\n"],"names":[],"mappings":";;;;;;AAAe,SAAS;IACtB,qBACE,8OAAC;QAAI,WAAU;;0BACb,8OAAC;gBAAI,WAAU;;;;;;0BACf,8OAAC;gBAAI,WAAU;0BACZ,MAAM,IAAI,CAAC;oBAAE,QAAQ;gBAAE,GAAG,GAAG,CAAC,CAAC,GAAG,sBACjC,8OAAC;wBAEC,WAAU;uBADL,CAAC,KAAK,EAAE,OAAO;;;;;;;;;;0BAK1B,8OAAC;gBAAI,WAAU;;;;;;;;;;;;AAGrB"}}]
+}

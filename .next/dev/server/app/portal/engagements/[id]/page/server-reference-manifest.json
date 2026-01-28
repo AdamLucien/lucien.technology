@@ -1,0 +1,155 @@
+{
+  "node": {
+    "60115ced28d4c7eda7fe32f4f1bbb3d224b2ac5b4b": {
+      "workers": {
+        "app/portal/engagements/[id]/page": {
+          "moduleId": "[project]/.next-internal/server/app/portal/engagements/[id]/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/portal/engagements/[id]/page.tsx [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_7",
+          "filename": "app/portal/engagements/[id]/page.tsx"
+        }
+      },
+      "layer": {
+        "app/portal/engagements/[id]/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_7",
+      "filename": "app/portal/engagements/[id]/page.tsx"
+    },
+    "6041779f45fd48163aaab5b0a55feff1bfc48920ca": {
+      "workers": {
+        "app/portal/engagements/[id]/page": {
+          "moduleId": "[project]/.next-internal/server/app/portal/engagements/[id]/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/portal/engagements/[id]/page.tsx [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_9",
+          "filename": "app/portal/engagements/[id]/page.tsx"
+        }
+      },
+      "layer": {
+        "app/portal/engagements/[id]/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_9",
+      "filename": "app/portal/engagements/[id]/page.tsx"
+    },
+    "606c575b8170777a866913711cf520bcb9d0353d43": {
+      "workers": {
+        "app/portal/engagements/[id]/page": {
+          "moduleId": "[project]/.next-internal/server/app/portal/engagements/[id]/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/portal/engagements/[id]/page.tsx [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_8",
+          "filename": "app/portal/engagements/[id]/page.tsx"
+        }
+      },
+      "layer": {
+        "app/portal/engagements/[id]/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_8",
+      "filename": "app/portal/engagements/[id]/page.tsx"
+    },
+    "609ebb9eff42a3a6500609fe0fcfa03f5f96d4f3ee": {
+      "workers": {
+        "app/portal/engagements/[id]/page": {
+          "moduleId": "[project]/.next-internal/server/app/portal/engagements/[id]/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/portal/engagements/[id]/page.tsx [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_0",
+          "filename": "app/portal/engagements/[id]/page.tsx"
+        }
+      },
+      "layer": {
+        "app/portal/engagements/[id]/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_0",
+      "filename": "app/portal/engagements/[id]/page.tsx"
+    },
+    "60a969c07f9b1a27435f788968f089b01450cc018b": {
+      "workers": {
+        "app/portal/engagements/[id]/page": {
+          "moduleId": "[project]/.next-internal/server/app/portal/engagements/[id]/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/portal/engagements/[id]/page.tsx [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_6",
+          "filename": "app/portal/engagements/[id]/page.tsx"
+        }
+      },
+      "layer": {
+        "app/portal/engagements/[id]/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_6",
+      "filename": "app/portal/engagements/[id]/page.tsx"
+    },
+    "60bce6dfcb4f14c1a1bf1302508c5cd914b5dd13a6": {
+      "workers": {
+        "app/portal/engagements/[id]/page": {
+          "moduleId": "[project]/.next-internal/server/app/portal/engagements/[id]/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/portal/engagements/[id]/page.tsx [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_3",
+          "filename": "app/portal/engagements/[id]/page.tsx"
+        }
+      },
+      "layer": {
+        "app/portal/engagements/[id]/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_3",
+      "filename": "app/portal/engagements/[id]/page.tsx"
+    },
+    "60c03b9157b6eb88ff4fcc298e4161774adc86ba8a": {
+      "workers": {
+        "app/portal/engagements/[id]/page": {
+          "moduleId": "[project]/.next-internal/server/app/portal/engagements/[id]/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/portal/engagements/[id]/page.tsx [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_4",
+          "filename": "app/portal/engagements/[id]/page.tsx"
+        }
+      },
+      "layer": {
+        "app/portal/engagements/[id]/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_4",
+      "filename": "app/portal/engagements/[id]/page.tsx"
+    },
+    "60e3da173737c2359461a6f3aa17108fe00bf0f9b1": {
+      "workers": {
+        "app/portal/engagements/[id]/page": {
+          "moduleId": "[project]/.next-internal/server/app/portal/engagements/[id]/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/portal/engagements/[id]/page.tsx [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_2",
+          "filename": "app/portal/engagements/[id]/page.tsx"
+        }
+      },
+      "layer": {
+        "app/portal/engagements/[id]/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_2",
+      "filename": "app/portal/engagements/[id]/page.tsx"
+    },
+    "60eb12ac9eab39062f6f610b5ab0d56fc2042d4e6e": {
+      "workers": {
+        "app/portal/engagements/[id]/page": {
+          "moduleId": "[project]/.next-internal/server/app/portal/engagements/[id]/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/portal/engagements/[id]/page.tsx [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_5",
+          "filename": "app/portal/engagements/[id]/page.tsx"
+        }
+      },
+      "layer": {
+        "app/portal/engagements/[id]/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_5",
+      "filename": "app/portal/engagements/[id]/page.tsx"
+    },
+    "60f55428d0958048dd4c5524058c5d2afd1a5150d0": {
+      "workers": {
+        "app/portal/engagements/[id]/page": {
+          "moduleId": "[project]/.next-internal/server/app/portal/engagements/[id]/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/portal/engagements/[id]/page.tsx [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_1",
+          "filename": "app/portal/engagements/[id]/page.tsx"
+        }
+      },
+      "layer": {
+        "app/portal/engagements/[id]/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_1",
+      "filename": "app/portal/engagements/[id]/page.tsx"
+    }
+  },
+  "edge": {}
+}

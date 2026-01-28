@@ -1,0 +1,13 @@
+{
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/login/page": "app/login/page.js",
+  "/page": "app/page.js",
+  "/partners/page": "app/partners/page.js",
+  "/portal/change-requests/page": "app/portal/change-requests/page.js",
+  "/portal/documents/page": "app/portal/documents/page.js",
+  "/portal/engagements/page": "app/portal/engagements/page.js",
+  "/portal/finance/page": "app/portal/finance/page.js",
+  "/portal/hr/page": "app/portal/hr/page.js",
+  "/portal/inquiries/page": "app/portal/inquiries/page.js",
+  "/portal/page": "app/portal/page.js"
+}

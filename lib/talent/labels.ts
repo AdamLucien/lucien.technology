@@ -1,5 +1,5 @@
 import { t, type SupportedLocale } from "@/lib/i18n";
-import { roleGroups, skillOptions, type TaxonomyOption, type SkillOption } from "@/lib/talent/taxonomy";
+import { roleGroups, skillOptions } from "@/lib/talent/taxonomy";
 
 const roleMap = new Map(
   roleGroups.flatMap((group) => group.roles.map((role) => [role.id, role.labelKey])),

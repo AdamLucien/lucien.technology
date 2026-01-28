@@ -14,9 +14,6 @@ type RequirementsJson = {
   skills?: Array<{ skillId: string; must: boolean }>;
 };
 
-const normalizeList = (values?: string[] | null) =>
-  (values ?? []).map((value) => value.trim()).filter(Boolean);
-
 export async function runMatchingForIntent(intentId: string, orgId: string) {
   const intent = await prisma.staffingIntent.findFirst({
     where: { id: intentId, orgId },

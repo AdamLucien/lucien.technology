@@ -21,6 +21,19 @@ const getProvider = (source: string) =>
 const normalizeList = (value: unknown): string[] =>
   Array.isArray(value) ? value.map((item) => String(item)).filter(Boolean) : [];
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const extractRoleIds = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      if (!isRecord(item)) return null;
+      return typeof item.roleId === "string" ? item.roleId : null;
+    })
+    .filter((roleId): roleId is string => Boolean(roleId));
+};
+
 const hashValue = (value: string) => createHash("sha256").update(value).digest("hex");
 
 const buildPlaceholderEmail = (key: string) => `scout+${hashValue(key)}@scout.local`;
@@ -76,11 +89,7 @@ const buildScoutIntent = (intent: {
   rolesJson: unknown;
   requirementsJson: unknown;
 }): ScoutIntentInput => {
-  const roleIds = normalizeList(
-    Array.isArray(intent.rolesJson)
-      ? intent.rolesJson.map((role: any) => role.roleId)
-      : [],
-  );
+  const roleIds = normalizeList(extractRoleIds(intent.rolesJson));
 
   return {
     orgId: intent.orgId,
@@ -140,7 +149,8 @@ export async function runScoutJob({
     );
 
     for (const source of sources) {
-      const provider = getProvider(source.trim() as any);
+      const trimmedSource = source.trim();
+      const provider = getProvider(trimmedSource);
       if (!provider) continue;
 
       const run = await prisma.scoutJobRun.create({

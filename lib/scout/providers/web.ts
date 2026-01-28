@@ -1,6 +1,36 @@
 import { createHash } from "crypto";
 import type { ScoutProvider, ScoutIntentInput, ScoutResult } from "@/lib/scout/providers/types";
 
+type WebResultItem = {
+  title?: string;
+  link?: string;
+  snippet?: string;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const stringOrUndefined = (value: unknown): string | undefined =>
+  typeof value === "string" ? value : undefined;
+
+const toWebResultItem = (value: unknown): WebResultItem => {
+  if (!isRecord(value)) return {};
+  return {
+    title: stringOrUndefined(value.title),
+    link: stringOrUndefined(value.link),
+    snippet: stringOrUndefined(value.snippet),
+  };
+};
+
+const toCustomResultItem = (value: unknown): WebResultItem => {
+  if (!isRecord(value)) return {};
+  return {
+    title: stringOrUndefined(value.title) ?? stringOrUndefined(value.name),
+    link: stringOrUndefined(value.url) ?? stringOrUndefined(value.link),
+    snippet: stringOrUndefined(value.snippet) ?? stringOrUndefined(value.description),
+  };
+};
+
 const extractEmail = (value?: string) => {
   if (!value) return null;
   const match = value.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
@@ -49,13 +79,10 @@ export const webProvider: ScoutProvider = {
       url.searchParams.set("api_key", apiKey);
       const response = await fetch(url);
       if (!response.ok) return [];
-      const data = (await response.json()) as { organic_results?: Array<any> };
+      const data = (await response.json()) as Record<string, unknown>;
+      const items = Array.isArray(data.organic_results) ? data.organic_results : [];
       return mapResults(
-        (data.organic_results ?? []).map((item) => ({
-          title: item.title,
-          link: item.link,
-          snippet: item.snippet,
-        })),
+        items.map(toWebResultItem),
         query,
       );
     }
@@ -70,13 +97,10 @@ export const webProvider: ScoutProvider = {
       url.searchParams.set("cx", cx);
       const response = await fetch(url);
       if (!response.ok) return [];
-      const data = (await response.json()) as { items?: Array<any> };
+      const data = (await response.json()) as Record<string, unknown>;
+      const items = Array.isArray(data.items) ? data.items : [];
       return mapResults(
-        (data.items ?? []).map((item) => ({
-          title: item.title,
-          link: item.link,
-          snippet: item.snippet,
-        })),
+        items.map(toWebResultItem),
         query,
       );
     }
@@ -88,13 +112,10 @@ export const webProvider: ScoutProvider = {
       url.searchParams.set("q", query);
       const response = await fetch(url);
       if (!response.ok) return [];
-      const data = (await response.json()) as { results?: Array<any> };
+      const data = (await response.json()) as Record<string, unknown>;
+      const items = Array.isArray(data.results) ? data.results : [];
       return mapResults(
-        (data.results ?? []).map((item) => ({
-          title: item.title ?? item.name,
-          link: item.url ?? item.link,
-          snippet: item.snippet ?? item.description,
-        })),
+        items.map(toCustomResultItem),
         query,
       );
     }

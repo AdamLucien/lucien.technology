@@ -9,6 +9,30 @@ import { StatusBadge } from "@/components/portal/StatusBadge";
 import { getSkillsGapBadge, getStaffingBadge } from "@/lib/status-badges";
 import type { StaffingRoleRequirement } from "@/lib/talent/staffing";
 
+type SkillRequirement = { skillId: string; must: boolean };
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const isSkillRequirement = (value: unknown): value is SkillRequirement =>
+  isRecord(value) &&
+  typeof value.skillId === "string" &&
+  typeof value.must === "boolean";
+
+const readSkills = (value: unknown): SkillRequirement[] => {
+  if (!isRecord(value)) return [];
+  const skills = value.skills;
+  if (!Array.isArray(skills)) return [];
+  return skills.filter(isSkillRequirement);
+};
+
+const readMissingMustSkills = (value: unknown): string[] => {
+  if (!isRecord(value)) return [];
+  const missing = value.missingMustSkillIds;
+  if (!Array.isArray(missing)) return [];
+  return missing.filter((item): item is string => typeof item === "string");
+};
+
 async function runMatching(formData: FormData) {
   "use server";
   const session = await requirePortalSession();
@@ -138,9 +162,10 @@ export default async function StaffingPage() {
             const roles = Array.isArray(intent.rolesJson)
               ? (intent.rolesJson as StaffingRoleRequirement[])
               : [];
-            const skills = (intent.requirementsJson as any)?.skills ?? [];
-            const topMatchMissingSkills =
-              (intent.matches[0]?.reasonsJson as any)?.missingMustSkillIds ?? [];
+            const skills = readSkills(intent.requirementsJson);
+            const topMatchMissingSkills = readMissingMustSkills(
+              intent.matches[0]?.reasonsJson,
+            );
             const hasRolesDefined = roles.length > 0;
             const fulfilled = intent.state === "FULFILLED";
             const subject =
@@ -189,7 +214,7 @@ export default async function StaffingPage() {
                       {roles.length === 0 ? (
                         <div className="text-xs text-muted">No roles defined.</div>
                       ) : (
-                        roles.map((role: any) => (
+                        roles.map((role) => (
                           <div key={`${intent.id}-${role.roleId}`}>
                             {getRoleLabel(role.roleId)} · {role.count ?? 1}
                           </div>
@@ -205,7 +230,7 @@ export default async function StaffingPage() {
                       {skills.length === 0 ? (
                         <div className="text-xs text-muted">No skills inferred.</div>
                       ) : (
-                        skills.map((skill: any) => (
+                        skills.map((skill) => (
                           <StatusBadge
                             key={`${intent.id}-${skill.skillId}`}
                             label={skill.skillId}

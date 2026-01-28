@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TalentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requirePortalSession } from "@/lib/portal";
 import { StatusBadge } from "@/components/portal/StatusBadge";
@@ -15,8 +16,11 @@ export default async function TalentListPage({
     ? searchParams?.status[0]
     : searchParams?.status;
 
+  const isTalentStatus = (value: string): value is TalentStatus =>
+    Object.values(TalentStatus).includes(value as TalentStatus);
+
   const profiles = await prisma.talentProfile.findMany({
-    where: statusParam ? { status: statusParam as any } : {},
+    where: statusParam && isTalentStatus(statusParam) ? { status: statusParam } : {},
     include: { _count: { select: { matches: true } } },
     orderBy: { updatedAt: "desc" },
   });

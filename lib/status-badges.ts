@@ -35,7 +35,7 @@ export const getInquiryStatusBadge = (status: string): BadgeSpec => {
 
 export const getEngagementStageBadge = (stage: string): BadgeSpec => {
   const map: Record<string, BadgeSpec> = {
-    triage: { label: "Triage", tone: "neutral", variant: "solid", icon: "route" },
+    triage: { label: "Triage", tone: "neutral", variant: "solid", icon: "how" },
     scope_pack: { label: "Scope pack", tone: "info", variant: "solid", icon: "scopes" },
     sow: { label: "SOW", tone: "info", variant: "solid", icon: "scopes" },
     delivery: { label: "Delivery", tone: "info", variant: "solid", icon: "delivery" },
@@ -59,7 +59,7 @@ export const getEngagementStatusBadge = (status: string): BadgeSpec => {
 export const getScopeStatusBadge = (status: string): BadgeSpec => {
   const map: Record<string, BadgeSpec> = {
     draft: { label: "Draft", tone: "neutral", variant: "solid", icon: "edit" },
-    sent: { label: "Sent", tone: "info", variant: "solid", icon: "mail" },
+    sent: { label: "Sent", tone: "info", variant: "solid", icon: "contact" },
     approved: { label: "Approved", tone: "success", variant: "solid", icon: "approve" },
     rejected: { label: "Rejected", tone: "danger", variant: "solid", icon: "reject" },
   };
@@ -207,18 +207,18 @@ export const getOutreachBadge = (stats: {
     return { label: "Outreach failed", tone: "danger", variant: "soft", icon: "reject" };
   }
   if (stats.replied > 0) {
-    return { label: "Replies", tone: "success", variant: "soft", icon: "mail" };
+    return { label: "Replies", tone: "success", variant: "soft", icon: "contact" };
   }
   if (stats.sent > 0) {
-    return { label: "Outreach sent", tone: "info", variant: "soft", icon: "mail" };
+    return { label: "Outreach sent", tone: "info", variant: "soft", icon: "contact" };
   }
   if (stats.queued > 0) {
     return { label: "Outreach queued", tone: "warning", variant: "soft", icon: "realtime" };
   }
-  return { label: "No outreach", tone: "neutral", variant: "outline", icon: "mail" };
+  return { label: "No outreach", tone: "neutral", variant: "outline", icon: "contact" };
 };
 
-export const getSkillsGapBadge = (missingMustSkills: string[]) => {
+export const getSkillsGapBadge = (missingMustSkills: string[]): BadgeSpec => {
   if (missingMustSkills.length === 0) {
     return { label: "Skills ok", tone: "success", variant: "soft", icon: "approve" };
   }

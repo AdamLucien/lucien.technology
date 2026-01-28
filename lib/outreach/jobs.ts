@@ -1,6 +1,7 @@
 import { createTransport } from "nodemailer";
 import type { TransportOptions } from "nodemailer";
 import { prisma } from "@/lib/prisma";
+import { getRoleLabel } from "@/lib/talent/labels";
 
 const DEFAULT_COOLDOWN_DAYS = 7;
 const DEFAULT_MAX_PER_INTENT = 3;
@@ -84,10 +85,12 @@ export async function runOutreachJob({
             ? "XING"
             : "OTHER";
 
-      const roleLabel =
-        Array.isArray(intent.rolesJson) && intent.rolesJson.length > 0
-          ? intent.rolesJson[0].roleId
-          : "role";
+      const roleId = Array.isArray(intent.rolesJson)
+        ? (intent.rolesJson as Array<{ roleId?: string }>).find(
+            (role) => role && typeof role === "object" && typeof role.roleId === "string",
+          )?.roleId
+        : undefined;
+      const roleLabel = roleId ? getRoleLabel(roleId) : "role";
 
       const payload = buildEmailPayload({
         profileName: profile.fullName,

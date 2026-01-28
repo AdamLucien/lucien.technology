@@ -1,4 +1,5 @@
 import { createHash } from "crypto";
+import { Prisma, ScoutSource } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { roleIds } from "@/lib/talent/taxonomy";
 import { webProvider } from "@/lib/scout/providers/web";
@@ -88,7 +89,7 @@ const buildScoutIntent = (intent: {
     domainIds: [],
     keywords: roleIds,
     modeIds: [],
-    source: "WEB",
+    source: "WEB" as ScoutSource,
   };
 };
 
@@ -120,7 +121,7 @@ export async function runScoutJob({
       seniorityId: intent.seniorityId,
       availabilityWindowId: intent.availabilityWindowId,
       modeIds: normalizeList(intent.modeIds),
-      source: "WEB",
+      source: "WEB" as ScoutSource,
       sourceQuery: null,
     })),
     ...derivedIntents,
@@ -169,7 +170,7 @@ export async function runScoutJob({
               profileId: profile.id,
               source: "SCOUT",
               version: 1,
-              payloadJson: result.payload ?? {},
+              payloadJson: (result.payload ?? {}) as Prisma.InputJsonValue,
               externalProfileUrl: result.externalProfileUrl ?? null,
               externalId: result.externalId ?? null,
               dedupeKey,

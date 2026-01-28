@@ -7,6 +7,7 @@ import { getStaffingSummaryForEngagement } from "@/lib/talent/staffing";
 import { logAuditEvent } from "@/lib/audit";
 import { StatusBadge } from "@/components/portal/StatusBadge";
 import { getSkillsGapBadge, getStaffingBadge } from "@/lib/status-badges";
+import type { StaffingRoleRequirement } from "@/lib/talent/staffing";
 
 async function runMatching(formData: FormData) {
   "use server";
@@ -134,7 +135,9 @@ export default async function StaffingPage() {
       ) : (
         <div className="space-y-4">
           {intents.map((intent) => {
-            const roles = Array.isArray(intent.rolesJson) ? intent.rolesJson : [];
+            const roles = Array.isArray(intent.rolesJson)
+              ? (intent.rolesJson as StaffingRoleRequirement[])
+              : [];
             const skills = (intent.requirementsJson as any)?.skills ?? [];
             const topMatchMissingSkills =
               (intent.matches[0]?.reasonsJson as any)?.missingMustSkillIds ?? [];

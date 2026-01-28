@@ -460,6 +460,10 @@ export default async function HrPage({ searchParams }: HrPageProps) {
 
   try {
     const memberScope = isLucienStaff ? scope : { ...scope, clientVisible: true };
+    const assignmentScope = isLucienStaff
+      ? {}
+      : { engagement: { orgId: session.user.orgId ?? "" } };
+
     [
       engagements,
       members,
@@ -529,7 +533,7 @@ export default async function HrPage({ searchParams }: HrPageProps) {
         },
       }),
       prisma.talentAssignment.findMany({
-        where: scope,
+        where: assignmentScope,
       }),
     ]);
   } catch (error) {

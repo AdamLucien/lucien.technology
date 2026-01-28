@@ -6211,3 +6211,5 @@ Error: Route "/partners" used `searchParams.lang`. `searchParams` is a Promise a
  GET /login 200 in 220ms (compile: 19ms, render: 201ms)
  GET / 200 in 280ms (compile: 77ms, render: 203ms)
 ✓ Compiled in 199ms
+✓ Compiled in 47ms
+✓ Compiled in 46ms

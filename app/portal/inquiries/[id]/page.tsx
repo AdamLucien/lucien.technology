@@ -13,6 +13,7 @@ import {
   updateStaffingIntentFromScope,
 } from "@/lib/talent/staffing";
 import { roleGroups } from "@/lib/talent/taxonomy";
+import type { StaffingRoleRequirement } from "@/lib/talent/staffing";
 
 export default async function InquiryDetailPage({
   params,
@@ -51,7 +52,7 @@ export default async function InquiryDetailPage({
   });
 
   const staffingRoles = Array.isArray(staffingIntent?.rolesJson)
-    ? staffingIntent?.rolesJson
+    ? (staffingIntent.rolesJson as StaffingRoleRequirement[])
     : [];
   const staffingBadge = getStaffingBadge(
     staffingIntent ? { state: staffingIntent.state } : null,
@@ -198,6 +199,10 @@ export default async function InquiryDetailPage({
     const session = await requirePortalSession();
     requireLucienStaff(session.user.role);
 
+    if (!inquiry) {
+      notFound();
+    }
+
     const roleId = String(formData.get("roleId") || "");
     const countRaw = Number(formData.get("count") || 1);
     const count = Number.isFinite(countRaw) && countRaw > 0 ? countRaw : 1;
@@ -217,8 +222,10 @@ export default async function InquiryDetailPage({
       });
     }
 
-    const roles = Array.isArray(intent.rolesJson) ? intent.rolesJson : [];
-    const existing = roles.find((role: any) => role.roleId === roleId);
+    const roles = Array.isArray(intent.rolesJson)
+      ? (intent.rolesJson as StaffingRoleRequirement[])
+      : [];
+    const existing = roles.find((role) => role.roleId === roleId);
     if (existing) {
       existing.count = count;
     } else {
@@ -347,13 +354,11 @@ export default async function InquiryDetailPage({
                 <p className="mt-2 text-xs text-muted">No roles defined yet.</p>
               ) : (
                 <div className="mt-2 space-y-1">
-                  {(staffingRoles as Array<{ roleId?: string; count?: number }>).map(
-                    (role) => (
-                      <div key={role.roleId ?? Math.random()}>
-                        {role.roleId} · {role.count ?? 1}
-                      </div>
-                    ),
-                  )}
+                  {staffingRoles.map((role, index) => (
+                    <div key={role.roleId ?? `${index}`}>
+                      {role.roleId} · {role.count ?? 1}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

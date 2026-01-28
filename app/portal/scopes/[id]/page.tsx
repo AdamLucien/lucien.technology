@@ -14,6 +14,7 @@ import {
   getSkillsGapBadge,
 } from "@/lib/status-badges";
 import { updateStaffingIntentFromScope } from "@/lib/talent/staffing";
+import type { StaffingRoleRequirement } from "@/lib/talent/staffing";
 import { roleGroups } from "@/lib/talent/taxonomy";
 
 const statusOptions = ["draft", "sent", "approved", "rejected"] as const;
@@ -59,7 +60,7 @@ export default async function ScopeDetailPage({
   });
 
   const staffingRoles = Array.isArray(staffingIntent?.rolesJson)
-    ? staffingIntent?.rolesJson
+    ? (staffingIntent.rolesJson as StaffingRoleRequirement[])
     : [];
   const staffingSkills =
     (staffingIntent?.requirementsJson as { skills?: Array<{ skillId: string; must: boolean }> })
@@ -84,6 +85,10 @@ export default async function ScopeDetailPage({
 
     const session = await requirePortalSession();
     requireLucienStaff(session.user.role);
+
+    if (!scopeProposal) {
+      notFound();
+    }
 
     const schema = z.object({
       title: z.string().min(2),
@@ -121,7 +126,8 @@ export default async function ScopeDetailPage({
       orgId: updated.orgId,
       inquiryId: updated.inquiryId,
       scopeProposalId: updated.id,
-      serviceSlug: scopeProposal.engagement?.serviceSlug ?? scopeProposal.inquiry?.serviceSlug ?? null,
+      serviceSlug:
+        scopeProposal.engagement?.serviceSlug ?? scopeProposal.inquiry?.serviceSlug ?? null,
       deliverables: deliverablesList,
     });
 
@@ -154,6 +160,10 @@ export default async function ScopeDetailPage({
     const session = await requirePortalSession();
     requireLucienStaff(session.user.role);
 
+    if (!scopeProposal) {
+      notFound();
+    }
+
     const roleId = String(formData.get("roleId") || "");
     const countRaw = Number(formData.get("count") || 1);
     const count = Number.isFinite(countRaw) && countRaw > 0 ? countRaw : 1;
@@ -169,13 +179,16 @@ export default async function ScopeDetailPage({
         orgId: scopeProposal.orgId,
         inquiryId: scopeProposal.inquiryId,
         scopeProposalId: scopeProposal.id,
-        serviceSlug: scopeProposal.engagement?.serviceSlug ?? scopeProposal.inquiry?.serviceSlug ?? null,
+        serviceSlug:
+          scopeProposal.engagement?.serviceSlug ?? scopeProposal.inquiry?.serviceSlug ?? null,
         deliverables,
       });
     }
 
-    const roles = Array.isArray(intent.rolesJson) ? intent.rolesJson : [];
-    const existing = roles.find((role: any) => role.roleId === roleId);
+    const roles = Array.isArray(intent.rolesJson)
+      ? (intent.rolesJson as StaffingRoleRequirement[])
+      : [];
+    const existing = roles.find((role) => role.roleId === roleId);
     if (existing) {
       existing.count = count;
     } else {
@@ -340,13 +353,11 @@ export default async function ScopeDetailPage({
               <p className="mt-2 text-xs text-muted">No roles defined yet.</p>
             ) : (
               <div className="mt-2 space-y-1">
-                {(staffingRoles as Array<{ roleId?: string; count?: number }>).map(
-                  (role) => (
-                    <div key={role.roleId ?? Math.random()}>
-                      {role.roleId} · {role.count ?? 1}
-                    </div>
-                  ),
-                )}
+                {staffingRoles.map((role, index) => (
+                  <div key={role.roleId ?? `${index}`}>
+                    {role.roleId} · {role.count ?? 1}
+                  </div>
+                ))}
               </div>
             )}
           </div>

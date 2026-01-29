@@ -4,6 +4,24 @@ import { StatusBadge } from "@/components/portal/StatusBadge";
 import { getOutreachBadge, getMetaBadge } from "@/lib/status-badges";
 import { runOutreachJob } from "@/lib/outreach/jobs";
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const readPayloadText = (value: unknown) => {
+  if (!isRecord(value)) return null;
+  if (typeof value.text === "string") return value.text;
+  if (typeof value.message === "string") return value.message;
+  return null;
+};
+
+const readPayloadDeepLink = (value: unknown) => {
+  if (!isRecord(value)) return null;
+  if (typeof value.deepLink === "string") return value.deepLink;
+  if (typeof value.link === "string") return value.link;
+  if (typeof value.url === "string") return value.url;
+  return null;
+};
+
 async function triggerOutreach() {
   "use server";
   const session = await requirePortalSession();
@@ -84,14 +102,41 @@ export default async function OutreachPage() {
           outreachLogs.map((log) => (
             <div
               key={log.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line/80 bg-ink px-4 py-3 text-sm text-muted"
+              className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-line/80 bg-ink px-4 py-3 text-sm text-muted"
             >
-              <div>
+              <div className="space-y-2">
                 <div className="text-ash">{log.talentProfile.fullName}</div>
                 <div className="text-xs text-slate">
                   {log.staffingIntent.engagement?.title ?? "Staffing intent"} ·{" "}
                   {log.channel}
                 </div>
+                {(log.channel === "LINKEDIN" || log.channel === "XING") && (
+                  <div className="space-y-2 text-xs text-slate">
+                    {readPayloadText(log.payloadJson) && (
+                      <div className="whitespace-pre-line rounded-lg border border-line/80 bg-soft px-3 py-2">
+                        {readPayloadText(log.payloadJson)}
+                      </div>
+                    )}
+                    {(() => {
+                      const deepLink =
+                        readPayloadDeepLink(log.payloadJson) ??
+                        (log.channel === "LINKEDIN"
+                          ? log.talentProfile.linkedInUrl
+                          : log.talentProfile.xingUrl);
+                      if (!deepLink) return null;
+                      return (
+                        <a
+                          href={deepLink}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-2 rounded-full border border-line/80 px-3 py-1 text-[0.6rem] uppercase tracking-[0.2em] text-ash"
+                        >
+                          Open {log.channel}
+                        </a>
+                      );
+                    })()}
+                  </div>
+                )}
               </div>
               <div className="text-xs uppercase tracking-[0.2em] text-slate">
                 {log.status}

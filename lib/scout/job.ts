@@ -1,6 +1,7 @@
 import { createHash } from "crypto";
 import { Prisma, ScoutSource } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { logAuditEvent } from "@/lib/audit";
 import { roleIds } from "@/lib/talent/taxonomy";
 import { webProvider } from "@/lib/scout/providers/web";
 import { linkedinProvider } from "@/lib/scout/providers/linkedin";
@@ -14,6 +15,9 @@ const providers: ScoutProvider[] = [
   xingProvider,
   directoryProvider,
 ];
+
+const DEFAULT_MAX_PER_RUN = 25;
+const DEFAULT_MAX_PER_DAY = 100;
 
 const getProvider = (source: string) =>
   providers.find((provider) => provider.source === source);
@@ -38,8 +42,46 @@ const hashValue = (value: string) => createHash("sha256").update(value).digest("
 
 const buildPlaceholderEmail = (key: string) => `scout+${hashValue(key)}@scout.local`;
 
+const toNumber = (value: unknown) => {
+  if (typeof value === "number") return Number.isFinite(value) ? value : undefined;
+  if (typeof value === "string") {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : undefined;
+  }
+  return undefined;
+};
+
+const readQuotas = (value: unknown) => {
+  if (!isRecord(value)) return {};
+  return {
+    maxPerRun: toNumber(value.maxPerRun),
+    maxPerDay: toNumber(value.maxPerDay),
+  };
+};
+
+const getQuotaDefaults = () => ({
+  maxPerRun: toNumber(process.env.SCOUT_MAX_PER_RUN) ?? DEFAULT_MAX_PER_RUN,
+  maxPerDay: toNumber(process.env.SCOUT_MAX_PER_DAY) ?? DEFAULT_MAX_PER_DAY,
+});
+
+const getStartOfDay = () => {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  return start;
+};
+
+const resolveDedupeKey = (result: ScoutResult) => {
+  if (result.dedupeKey) return result.dedupeKey;
+  if (result.externalProfileUrl) return hashValue(result.externalProfileUrl);
+  if (result.externalId) return hashValue(result.externalId);
+  if (result.email) return hashValue(result.email);
+  return result.fullName ? hashValue(result.fullName) : null;
+};
+
 const upsertTalentProfile = async (result: ScoutResult, intent: ScoutIntentInput) => {
-  const email = result.email ?? buildPlaceholderEmail(result.dedupeKey ?? result.externalProfileUrl ?? result.fullName);
+  const email =
+    result.email ??
+    buildPlaceholderEmail(result.dedupeKey ?? result.externalProfileUrl ?? result.fullName);
   const primaryRole =
     result.primaryRole ?? intent.roleIds.find((roleId) => roleIds.includes(roleId)) ?? "systems_architect";
 
@@ -74,13 +116,15 @@ const upsertTalentProfile = async (result: ScoutResult, intent: ScoutIntentInput
   }
 
   if (profile) {
-    return prisma.talentProfile.update({
+    const updated = await prisma.talentProfile.update({
       where: { id: profile.id },
       data: payload,
     });
+    return { profile: updated, created: false };
   }
 
-  return prisma.talentProfile.create({ data: payload });
+  const created = await prisma.talentProfile.create({ data: payload });
+  return { profile: created, created: true };
 };
 
 const buildScoutIntent = (intent: {
@@ -107,6 +151,9 @@ export async function runScoutJob({
 }: {
   orgId?: string;
 }) {
+  const quotaDefaults = getQuotaDefaults();
+  const startOfDay = getStartOfDay();
+
   const searchIntents = await prisma.searchIntent.findMany({
     where: {
       enabled: true,
@@ -114,6 +161,7 @@ export async function runScoutJob({
     },
   });
 
+  const searchIntentMap = new Map(searchIntents.map((intent) => [intent.id, intent]));
   const activeIntents = await prisma.staffingIntent.findMany({
     where: { state: "ACTIVE", ...(orgId ? { orgId } : {}) },
   });
@@ -153,6 +201,60 @@ export async function runScoutJob({
       const provider = getProvider(trimmedSource);
       if (!provider) continue;
 
+      const quotas = intent.searchIntentId
+        ? readQuotas(searchIntentMap.get(intent.searchIntentId)?.quotasJson)
+        : {};
+      const maxPerRun = quotas.maxPerRun ?? quotaDefaults.maxPerRun;
+      const maxPerDay = quotas.maxPerDay ?? quotaDefaults.maxPerDay;
+
+      const dailyUsage = await prisma.scoutJobRun.aggregate({
+        where: {
+          orgId: intent.orgId,
+          source: provider.source,
+          searchIntentId: intent.searchIntentId ?? null,
+          staffingIntentId: intent.intentId ?? null,
+          startedAt: { gte: startOfDay },
+        },
+        _sum: { createdCount: true, updatedCount: true, dedupedCount: true },
+      });
+
+      const usedToday =
+        (dailyUsage._sum.createdCount ?? 0) +
+        (dailyUsage._sum.updatedCount ?? 0) +
+        (dailyUsage._sum.dedupedCount ?? 0);
+      const remainingToday = Math.max((maxPerDay ?? 0) - usedToday, 0);
+
+      if (remainingToday <= 0 || maxPerRun <= 0) {
+        const run = await prisma.scoutJobRun.create({
+          data: {
+            orgId: intent.orgId,
+            source: provider.source,
+            searchIntentId: intent.searchIntentId ?? null,
+            staffingIntentId: intent.intentId ?? null,
+            status: "OK",
+            error: "quota_reached",
+            startedAt: new Date(),
+            finishedAt: new Date(),
+          },
+        });
+
+        await logAuditEvent({
+          orgId: intent.orgId,
+          action: "scout_job_run_skipped",
+          resourceType: "scout_job_run",
+          resourceId: run.id,
+          meta: {
+            source: provider.source,
+            searchIntentId: intent.searchIntentId ?? null,
+            staffingIntentId: intent.intentId ?? null,
+            maxPerRun,
+            maxPerDay,
+            usedToday,
+          },
+        });
+        continue;
+      }
+
       const run = await prisma.scoutJobRun.create({
         data: {
           orgId: intent.orgId,
@@ -168,12 +270,34 @@ export async function runScoutJob({
         const found = await provider.search({ ...intent, source: provider.source });
         let createdCount = 0;
         let updatedCount = 0;
+        let dedupedCount = 0;
+        const perRunLimit = Math.min(maxPerRun, remainingToday);
+        const limited = perRunLimit > 0 ? found.slice(0, perRunLimit) : [];
 
-        for (const result of found) {
-          const profile = await upsertTalentProfile(result, intent);
-          const dedupeKey =
-            result.dedupeKey ??
-            (result.externalProfileUrl ? hashValue(result.externalProfileUrl) : null);
+        for (const result of limited) {
+          const dedupeKey = resolveDedupeKey(result);
+          const existingSignal =
+            dedupeKey || result.externalProfileUrl || result.externalId
+              ? await prisma.talentSignal.findFirst({
+                  where: {
+                    source: "SCOUT",
+                    OR: [
+                      dedupeKey ? { dedupeKey } : undefined,
+                      result.externalProfileUrl
+                        ? { externalProfileUrl: result.externalProfileUrl }
+                        : undefined,
+                      result.externalId ? { externalId: result.externalId } : undefined,
+                    ].filter(Boolean) as Prisma.TalentSignalWhereInput["OR"],
+                  },
+                })
+              : null;
+
+          if (existingSignal) {
+            dedupedCount += 1;
+            continue;
+          }
+
+          const { profile, created } = await upsertTalentProfile(result, intent);
 
           await prisma.talentSignal.create({
             data: {
@@ -189,7 +313,7 @@ export async function runScoutJob({
             },
           });
 
-          if (profile.createdAt.getTime() === profile.updatedAt.getTime()) {
+          if (created) {
             createdCount += 1;
           } else {
             updatedCount += 1;
@@ -202,7 +326,26 @@ export async function runScoutJob({
             foundCount: found.length,
             createdCount,
             updatedCount,
+            dedupedCount,
             finishedAt: new Date(),
+          },
+        });
+
+        await logAuditEvent({
+          orgId: intent.orgId,
+          action: "scout_job_run_completed",
+          resourceType: "scout_job_run",
+          resourceId: run.id,
+          meta: {
+            source: provider.source,
+            searchIntentId: intent.searchIntentId ?? null,
+            staffingIntentId: intent.intentId ?? null,
+            foundCount: found.length,
+            createdCount,
+            updatedCount,
+            dedupedCount,
+            maxPerRun,
+            maxPerDay,
           },
         });
 
@@ -214,6 +357,19 @@ export async function runScoutJob({
             status: "FAILED",
             error: error instanceof Error ? error.message : "unknown_error",
             finishedAt: new Date(),
+          },
+        });
+
+        await logAuditEvent({
+          orgId: intent.orgId,
+          action: "scout_job_run_failed",
+          resourceType: "scout_job_run",
+          resourceId: run.id,
+          meta: {
+            source: provider.source,
+            searchIntentId: intent.searchIntentId ?? null,
+            staffingIntentId: intent.intentId ?? null,
+            error: error instanceof Error ? error.message : "unknown_error",
           },
         });
       }

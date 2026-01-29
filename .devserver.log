@@ -6213,3 +6213,4 @@ Error: Route "/partners" used `searchParams.lang`. `searchParams` is a Promise a
 ✓ Compiled in 199ms
 ✓ Compiled in 47ms
 ✓ Compiled in 46ms
+✓ Compiled in 250ms

@@ -1,10 +1,12 @@
 import { createTransport } from "nodemailer";
 import type { TransportOptions } from "nodemailer";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getRoleLabel } from "@/lib/talent/labels";
 
 const DEFAULT_COOLDOWN_DAYS = 7;
 const DEFAULT_MAX_PER_INTENT = 3;
+const DEFAULT_MAX_PER_DAY = 25;
 
 const now = () => new Date();
 
@@ -13,6 +15,12 @@ const getCooldownCutoff = () => {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - days);
   return cutoff;
+};
+
+const getStartOfDay = () => {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  return start;
 };
 
 const buildEmailPayload = ({
@@ -37,6 +45,23 @@ export async function runOutreachJob({
 }) {
   const cutoff = getCooldownCutoff();
   const maxPerIntent = Number(process.env.OUTREACH_MAX_PER_INTENT || DEFAULT_MAX_PER_INTENT);
+  const maxPerDay = Number(process.env.OUTREACH_MAX_PER_DAY || DEFAULT_MAX_PER_DAY);
+  const startOfDay = getStartOfDay();
+  const dailyCounts = new Map<string, number>();
+
+  const getDailyCount = async (orgId: string) => {
+    if (dailyCounts.has(orgId)) {
+      return dailyCounts.get(orgId) ?? 0;
+    }
+    const count = await prisma.outreachLog.count({
+      where: {
+        orgId,
+        createdAt: { gte: startOfDay },
+      },
+    });
+    dailyCounts.set(orgId, count);
+    return count;
+  };
 
   const intents = await prisma.staffingIntent.findMany({
     where: {
@@ -57,11 +82,21 @@ export async function runOutreachJob({
   let sent = 0;
   let queued = 0;
   let failed = 0;
+  let skipped = 0;
 
   for (const intent of intents) {
     if (!intent.engagementId || !intent.engagement) continue;
+    let dailyCount = await getDailyCount(intent.orgId);
+    if (dailyCount >= maxPerDay) {
+      skipped += intent.matches.length;
+      continue;
+    }
 
     for (const match of intent.matches) {
+      if (dailyCount >= maxPerDay) {
+        skipped += 1;
+        break;
+      }
       const profile = match.talentProfile;
       if (profile.optOutAt) continue;
 
@@ -82,8 +117,8 @@ export async function runOutreachJob({
         : profile.linkedInUrl
           ? "LINKEDIN"
           : profile.xingUrl
-            ? "XING"
-            : "OTHER";
+          ? "XING"
+          : "OTHER";
 
       const roleId = Array.isArray(intent.rolesJson)
         ? (intent.rolesJson as Array<{ roleId?: string }>).find(
@@ -97,6 +132,12 @@ export async function runOutreachJob({
         engagementTitle: intent.engagement.title,
         roleLabel,
       });
+      const deepLink =
+        channel === "LINKEDIN"
+          ? profile.linkedInUrl
+          : channel === "XING"
+            ? profile.xingUrl
+            : null;
 
       const outreach = await prisma.outreachLog.create({
         data: {
@@ -106,28 +147,71 @@ export async function runOutreachJob({
           channel,
           status: channel === "EMAIL" ? "QUEUED" : "QUEUED",
           templateKey: "default_outreach",
-          payloadJson: payload,
+          payloadJson: {
+            ...payload,
+            deepLink,
+          },
           createdByUserId: triggeredByUserId ?? null,
         },
       });
+      dailyCount += 1;
+      dailyCounts.set(intent.orgId, dailyCount);
 
       if (channel === "EMAIL" && !isPlaceholder) {
         const idempotencyKey = `outreach:${intent.id}:${profile.id}:email`;
-        const job = await prisma.emailJob.create({
-          data: {
-            orgId: intent.orgId,
-            toEmail: email,
-            templateKey: "default_outreach",
-            payloadJson: payload,
-            status: "QUEUED",
-            idempotencyKey,
-            scheduledAt: now(),
-          },
-        });
-
-        queued += 1;
+        let emailJobId: string | null = null;
+        try {
+          const job = await prisma.emailJob.create({
+            data: {
+              orgId: intent.orgId,
+              toEmail: email,
+              templateKey: "default_outreach",
+              payloadJson: payload,
+              status: "QUEUED",
+              idempotencyKey,
+              scheduledAt: now(),
+            },
+          });
+          emailJobId = job.id;
+          queued += 1;
+        } catch (error) {
+          if (
+            error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === "P2002"
+          ) {
+            const existing = await prisma.emailJob.findUnique({
+              where: { idempotencyKey },
+            });
+            if (!existing) {
+              skipped += 1;
+              continue;
+            }
+            emailJobId = existing.id;
+            if (existing.status === "SENT") {
+              await prisma.outreachLog.update({
+                where: { id: outreach.id },
+                data: { status: "SENT", sentAt: existing.sentAt ?? now() },
+              });
+              sent += 1;
+              continue;
+            }
+            if (existing.status === "FAILED") {
+              await prisma.outreachLog.update({
+                where: { id: outreach.id },
+                data: { status: "FAILED", error: existing.error ?? "send_failed" },
+              });
+              failed += 1;
+              continue;
+            }
+          }
+          throw error;
+        }
 
         try {
+          if (!emailJobId) {
+            skipped += 1;
+            continue;
+          }
           if (!process.env.EMAIL_SERVER) {
             throw new Error("EMAIL_SERVER not configured");
           }
@@ -141,7 +225,7 @@ export async function runOutreachJob({
             text: payload.text,
           });
           await prisma.emailJob.update({
-            where: { id: job.id },
+            where: { id: emailJobId },
             data: { status: "SENT", sentAt: now() },
           });
           await prisma.outreachLog.update({
@@ -159,10 +243,12 @@ export async function runOutreachJob({
           sent += 1;
         } catch (error) {
           const message = error instanceof Error ? error.message : "send_failed";
-          await prisma.emailJob.update({
-            where: { id: job.id },
-            data: { status: "FAILED", error: message },
-          });
+          if (emailJobId) {
+            await prisma.emailJob.update({
+              where: { id: emailJobId },
+              data: { status: "FAILED", error: message },
+            });
+          }
           await prisma.outreachLog.update({
             where: { id: outreach.id },
             data: { status: "FAILED", error: message },
@@ -175,5 +261,5 @@ export async function runOutreachJob({
     }
   }
 
-  return { ok: true, sent, queued, failed };
+  return { ok: true, sent, queued, failed, skipped };
 }

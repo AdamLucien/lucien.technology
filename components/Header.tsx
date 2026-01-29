@@ -21,11 +21,7 @@ const navItems = [
   { href: "/contact", label: "Contact", icon: "contact" },
 ] satisfies { href: string; label: string; icon: IconName }[];
 
-type HeaderProps = {
-  devLoginEmails?: string[];
-};
-
-export function Header({ devLoginEmails = [] }: HeaderProps) {
+export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
@@ -426,8 +422,7 @@ export function Header({ devLoginEmails = [] }: HeaderProps) {
               </div>
               <div className="mt-4">
                 <LoginForm
-                  callbackUrl="/portal"
-                  devLoginEmails={devLoginEmails}
+                  callbackUrl="/portal/hr"
                   headingTag="h2"
                 />
               </div>

@@ -5,7 +5,6 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { MainContent } from "@/components/MainContent";
 import { brand } from "@/lib/brand";
-import { getDevLoginEmails } from "@/lib/auth-helpers";
 import { metadataBase } from "@/lib/seo";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -63,8 +62,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const devLoginEmails = getDevLoginEmails();
-
   return (
     <html lang="en" className={jakarta.variable}>
       <head>
@@ -91,7 +88,7 @@ export default function RootLayout({
         >
           Skip to content
         </a>
-        <Header devLoginEmails={devLoginEmails} />
+        <Header />
         <MainContent>{children}</MainContent>
         <Footer />
         {process.env.VERCEL === "1" ? <Analytics /> : null}

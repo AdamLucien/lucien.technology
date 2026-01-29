@@ -3,7 +3,7 @@
 This is an internal operator manual for Lucien staff and admins.
 
 ## Access overview
-- Login: `/login` (magic link or dev login in development).
+- Login: `/login` (magic link).
 - Portal entry: `/portal` (requires auth). `app/portal/layout.tsx` enforces session.
 - Roles: `lucien_admin` (full), `lucien_operator` (staff), `org_admin`/`org_user` (clients). See `lib/portal.ts`.
 

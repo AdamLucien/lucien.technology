@@ -9,9 +9,10 @@
 From `.env.example`, `lib/prisma.ts`, `lib/auth.ts`, and Stripe/receipt modules:
 - `DATABASE_URL` (PostgreSQL connection string).
 - `NEXTAUTH_URL`, `NEXTAUTH_SECRET`.
-- `EMAIL_SERVER` (SMTP, required for production email login).
-- `EMAIL_FROM` (optional; defaults to brand email).
-- `ADMIN_EMAIL`, `DEV_LOGIN_EMAIL` (dev only; used in seed/dev login).
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` (required for production magic-link login).
+- `EMAIL_FROM` (required; used for outbound auth email).
+- `EMAIL_SERVER` (SMTP connection string for outreach emails).
+- `ADMIN_EMAIL` (dev/seed only).
 - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` (for checkout/webhooks).
 - `RECEIPT_SECRET` (used by `lib/receipt.ts`).
 - `ENABLE_DOSSIER_EXPORT` (enable `/api/portal/export/engagement/[id]`).

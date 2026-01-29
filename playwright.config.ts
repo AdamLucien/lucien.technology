@@ -1,4 +1,9 @@
 import { defineConfig } from "@playwright/test";
+
+const magicLinkCaptureDir =
+  process.env.MAGIC_LINK_CAPTURE_DIR ?? "test-results/magic-links";
+process.env.MAGIC_LINK_CAPTURE_DIR = magicLinkCaptureDir;
+
 export default defineConfig({
   testDir: "./tests",
   timeout: 60000,
@@ -18,10 +23,9 @@ export default defineConfig({
         }/lucien_dev?schema=public`,
       NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET ?? "dev-secret",
       NEXTAUTH_URL: "http://localhost:3000",
-      DEV_LOGIN_EMAIL:
-        process.env.DEV_LOGIN_EMAIL ?? "admin@lucien.ai,user@civic.example",
       ADMIN_EMAIL: process.env.ADMIN_EMAIL ?? "admin@lucien.ai",
       EMAIL_FROM: process.env.EMAIL_FROM ?? "contact@lucien.ai",
+      MAGIC_LINK_CAPTURE_DIR: magicLinkCaptureDir,
     },
   },
 });

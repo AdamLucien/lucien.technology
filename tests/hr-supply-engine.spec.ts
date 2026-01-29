@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
 import { runOutreachJob } from "@/lib/outreach/jobs";
+import { loginAs } from "./helpers/auth";
 
 const prisma = new PrismaClient();
 
@@ -13,12 +14,6 @@ type SeededIntent = {
   engagementId: string;
   intentId: string;
   tag: string;
-};
-
-const loginAs = async (page: Page, email: string) => {
-  await page.goto("/login");
-  await page.getByRole("button", { name: email, exact: true }).click();
-  await page.waitForURL(/\/portal/);
 };
 
 const ensureDatabase = () => {
@@ -223,7 +218,7 @@ test("demand to HR supply flow", async ({ page }) => {
     throw new Error("Inquiry not created.");
   }
 
-  await loginAs(page, "admin@lucien.ai");
+  await loginAs(page, "admin", "/portal");
   await page.goto(`/portal/inquiries/${inquiry.id}`);
   await expect(page.getByText(/staffing draft/i).first()).toBeVisible();
 

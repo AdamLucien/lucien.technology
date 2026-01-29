@@ -97,10 +97,10 @@
 - `SQLITE_DB_PATH` (optional path to `dev.db` for import)
 - `NEXTAUTH_SECRET`
 - `NEXTAUTH_URL`
-- `EMAIL_SERVER` (SMTP connection string)
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`
 - `EMAIL_FROM`
+- `EMAIL_SERVER` (SMTP connection string for outreach)
 - `ADMIN_EMAIL`
-- `DEV_LOGIN_EMAIL` (dev only)
 - `REQUIRE_SCOPE_APPROVAL` (`true` to require an approved scope before conversion)
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`

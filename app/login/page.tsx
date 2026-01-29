@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/LoginForm";
-import { getDevLoginEmails } from "@/lib/auth-helpers";
 import { getServerAuthSession } from "@/lib/auth";
 
 export const metadata: Metadata = {
@@ -24,8 +23,7 @@ export default async function LoginPage({
   const callbackUrl =
     callbackParam && callbackParam.startsWith("/") && !callbackParam.startsWith("//")
       ? callbackParam
-      : "/portal";
-  const devLoginEmails = getDevLoginEmails();
+      : "/portal/hr";
   const session = await getServerAuthSession();
 
   if (session) {
@@ -34,7 +32,7 @@ export default async function LoginPage({
 
   return (
     <section className="mx-auto w-full max-w-lg px-6 pb-16 pt-16">
-      <LoginForm callbackUrl={callbackUrl} devLoginEmails={devLoginEmails} />
+      <LoginForm callbackUrl={callbackUrl} />
     </section>
   );
 }

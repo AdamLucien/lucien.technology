@@ -1,26 +1,27 @@
 import { test, expect, type Page } from "@playwright/test";
+import { loginAs } from "./helpers/auth";
 
 const completeOnboardingIfNeeded = async (page: Page) => {
   const onboardingHeading = page.getByRole("heading", {
     level: 1,
     name: /confirm profile/i,
   });
-  const onboardingNeeded =
+  const onboardingRoute =
     page.url().includes("/portal/onboarding") ||
     (await page
       .waitForURL(/\/portal\/onboarding/, { timeout: 4000 })
       .then(() => true)
       .catch(() => false));
+  const headingVisible = await onboardingHeading
+    .isVisible({ timeout: 4000 })
+    .catch(() => false);
 
-  if (!onboardingNeeded) {
+  if (!onboardingRoute && !headingVisible) {
     return;
   }
 
-  const headingVisible = await onboardingHeading
-    .isVisible({ timeout: 5000 })
-    .catch(() => false);
   if (!headingVisible) {
-    return;
+    await onboardingHeading.waitFor({ timeout: 5000 });
   }
   await page.getByRole("button", { name: /continue/i }).click();
   const engagementSelect = page.getByRole("combobox", {
@@ -167,9 +168,7 @@ test("request scope submits and confirms", async ({ page }) => {
 });
 
 test("admin converts inquiry to engagement", async ({ page }) => {
-  await page.goto("/login");
-  await page.getByRole("button", { name: "admin@lucien.ai", exact: true }).click();
-  await page.waitForURL(/\/portal/);
+  await loginAs(page, "admin", "/portal");
   await page.goto("/portal/inquiries");
   const firstInquiry = page.locator('a[href^="/portal/inquiries/"]').first();
   await firstInquiry.click();
@@ -185,9 +184,7 @@ test("admin converts inquiry to engagement", async ({ page }) => {
 });
 
 test("client views engagements list", async ({ page }) => {
-  await page.goto("/login");
-  await page.getByRole("button", { name: "user@civic.example", exact: true }).click();
-  await page.waitForURL(/\/portal/);
+  await loginAs(page, "user", "/portal");
   await completeOnboardingIfNeeded(page);
   await page.goto("/portal/engagements");
   await completeOnboardingIfNeeded(page);
@@ -200,9 +197,7 @@ test("client views engagements list", async ({ page }) => {
 });
 
 test("client onboarding flow completes once", async ({ page }) => {
-  await page.goto("/login");
-  await page.getByRole("button", { name: "user@civic.example", exact: true }).click();
-  await page.waitForURL(/\/portal/);
+  await loginAs(page, "user", "/portal");
   await completeOnboardingIfNeeded(page);
   await page.goto("/portal");
   await expect(
@@ -211,9 +206,7 @@ test("client onboarding flow completes once", async ({ page }) => {
 });
 
 test("client can edit proposed change request but not after approval", async ({ page }) => {
-  await page.goto("/login");
-  await page.getByRole("button", { name: "user@civic.example", exact: true }).click();
-  await page.waitForURL(/\/portal/);
+  await loginAs(page, "user", "/portal");
   await completeOnboardingIfNeeded(page);
   await page.goto("/portal/engagements");
   const engagementHref = await page
@@ -263,10 +256,7 @@ test("client can edit proposed change request but not after approval", async ({ 
   const changeRequestUrl = page.url();
   await page.getByRole("button", { name: /logout/i }).click();
   await page.waitForURL("**/");
-  await page.goto("/login");
-
-  await page.getByRole("button", { name: "admin@lucien.ai", exact: true }).click();
-  await page.waitForURL(/\/portal/);
+  await loginAs(page, "admin", "/portal");
   await page.goto(changeRequestUrl);
   await page.getByRole("combobox", { name: "Status" }).selectOption("approved");
   await page.getByLabel("Decision note").fill("Approved with no deltas.");
@@ -274,27 +264,21 @@ test("client can edit proposed change request but not after approval", async ({ 
   await page.getByRole("button", { name: /logout/i }).click();
   await page.waitForURL("**/");
 
-  await page.goto("/login");
-  await page.getByRole("button", { name: "user@civic.example", exact: true }).click();
-  await page.waitForURL(/\/portal/);
+  await loginAs(page, "user", "/portal");
   await completeOnboardingIfNeeded(page);
   await page.goto(changeRequestUrl);
   await expect(page.getByRole("heading", { name: /edit request/i })).toHaveCount(0);
 });
 
 test("document archive permissions enforced", async ({ page }) => {
-  await page.goto("/login");
-  await page.getByRole("button", { name: "user@civic.example", exact: true }).click();
-  await page.waitForURL(/\/portal/);
+  await loginAs(page, "user", "/portal");
   await completeOnboardingIfNeeded(page);
   await page.goto("/portal/documents");
   await expect(page.getByRole("button", { name: "Archive" })).toHaveCount(0);
 
   await page.getByRole("button", { name: /logout/i }).click();
   await page.waitForURL("**/");
-  await page.goto("/login");
-  await page.getByRole("button", { name: "admin@lucien.ai", exact: true }).click();
-  await page.waitForURL(/\/portal/);
+  await loginAs(page, "admin", "/portal");
   await page.goto("/portal/documents");
   const archiveButton = page.getByRole("button", { name: "Archive" }).first();
   await archiveButton.click();
@@ -305,9 +289,7 @@ test("document archive permissions enforced", async ({ page }) => {
 });
 
 test("critical edit requires change request", async ({ page }) => {
-  await page.goto("/login");
-  await page.getByRole("button", { name: "user@civic.example", exact: true }).click();
-  await page.waitForURL(/\/portal/);
+  await loginAs(page, "user", "/portal");
   await completeOnboardingIfNeeded(page);
   await page.goto("/portal/engagements");
   const engagementLink = await page

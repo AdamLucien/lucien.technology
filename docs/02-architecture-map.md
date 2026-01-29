@@ -22,7 +22,7 @@
   - Partners: `components/partners/PartnersForm.tsx`.
   - Icons: `components/icons/*` with `Icon`/`IconStatic` and `iconMap`.
 - `lib/`
-  - Auth/session: `lib/auth.ts`, `lib/portal.ts`, `lib/auth-helpers.ts`.
+  - Auth/session: `lib/auth.ts`, `lib/portal.ts`.
   - Prisma: `lib/prisma.ts`.
   - Audit/notifications: `lib/audit.ts`, `lib/notifications.ts`.
   - i18n: `lib/i18n.ts`.

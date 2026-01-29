@@ -1,26 +1,27 @@
 import { test, expect, type Page } from "@playwright/test";
+import { loginAs } from "./helpers/auth";
 
 const completeOnboardingIfNeeded = async (page: Page) => {
   const onboardingHeading = page.getByRole("heading", {
     level: 1,
     name: /confirm profile/i,
   });
-  const onboardingNeeded =
+  const onboardingRoute =
     page.url().includes("/portal/onboarding") ||
     (await page
       .waitForURL(/\/portal\/onboarding/, { timeout: 4000 })
       .then(() => true)
       .catch(() => false));
+  const headingVisible = await onboardingHeading
+    .isVisible({ timeout: 4000 })
+    .catch(() => false);
 
-  if (!onboardingNeeded) {
+  if (!onboardingRoute && !headingVisible) {
     return;
   }
 
-  const headingVisible = await onboardingHeading
-    .isVisible({ timeout: 5000 })
-    .catch(() => false);
   if (!headingVisible) {
-    return;
+    await onboardingHeading.waitFor({ timeout: 5000 });
   }
   await page.getByRole("button", { name: /continue/i }).click();
   const engagementSelect = page.getByRole("combobox", {
@@ -37,21 +38,15 @@ const completeOnboardingIfNeeded = async (page: Page) => {
   await expect(page).toHaveURL(/\/portal/);
 };
 
-const loginWithDev = async (page: Page, email: string) => {
-  await page.goto("/login");
-  await page.getByRole("button", { name: email, exact: true }).click();
-  await page.waitForURL(/\/portal/);
-};
-
 test("notifications dialog shows items and can mark all read", async ({ page }) => {
-  await loginWithDev(page, "user@civic.example");
+  await loginAs(page, "user", "/portal");
   await completeOnboardingIfNeeded(page);
 
   const bellButton = page.getByRole("button", { name: "Notifications" });
   await bellButton.click();
   const popover = page.locator("[data-notifications-popover]");
   await expect(popover).toBeVisible();
-  await expect(popover.getByText(/notifications/i)).toBeVisible();
+  await expect(popover.getByText("Notifications", { exact: true })).toBeVisible();
 
   const markAll = popover.getByRole("button", { name: /mark all read/i });
   await markAll.click();
@@ -68,7 +63,7 @@ test("notifications dialog shows items and can mark all read", async ({ page }) 
 });
 
 test("client cannot hard delete", async ({ page }) => {
-  await loginWithDev(page, "user@civic.example");
+  await loginAs(page, "user", "/portal");
   await completeOnboardingIfNeeded(page);
 
   const response = await page.evaluate(async () => {
@@ -89,7 +84,7 @@ test("client cannot hard delete", async ({ page }) => {
 });
 
 test("admin can hard delete with confirmation and reason", async ({ page }) => {
-  await loginWithDev(page, "admin@lucien.ai");
+  await loginAs(page, "admin", "/portal");
   await page.goto("/portal/engagements");
   const engagementHref = await page
     .locator('a[href^="/portal/engagements/"]')
@@ -146,7 +141,7 @@ test("admin can hard delete with confirmation and reason", async ({ page }) => {
 });
 
 test("controlled edit requires approved change request before apply", async ({ page }) => {
-  await loginWithDev(page, "admin@lucien.ai");
+  await loginAs(page, "admin", "/portal");
   await page.goto("/portal/engagements");
   const engagementHref = await page
     .locator('a[href^="/portal/engagements/"]')

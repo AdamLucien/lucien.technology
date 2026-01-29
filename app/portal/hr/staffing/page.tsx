@@ -8,7 +8,7 @@ import { logAuditEvent } from "@/lib/audit";
 import { StatusBadge } from "@/components/portal/StatusBadge";
 import { getSkillsGapBadge, getStaffingBadge } from "@/lib/status-badges";
 import type { StaffingRoleRequirement } from "@/lib/talent/staffing";
-import { hrCopy } from "@/lib/hr/copy";
+import { hrCopy } from "@/lib/hr/copy-data";
 
 type SkillRequirement = { skillId: string; must: boolean };
 

@@ -6,7 +6,7 @@ import { StatusBadge } from "@/components/portal/StatusBadge";
 import { getTalentContactStatusBadge, getTalentStatusBadge } from "@/lib/status-badges";
 import { domainOptions } from "@/lib/talent/taxonomy";
 import { t } from "@/lib/i18n";
-import { hrCopy } from "@/lib/hr/copy";
+import { hrCopy } from "@/lib/hr/copy-data";
 
 export default async function TalentListPage({
   searchParams,

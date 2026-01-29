@@ -20,7 +20,7 @@ import {
   requirePortalSession,
 } from "@/lib/portal";
 import Link from "next/link";
-import { hrCopy } from "@/lib/hr/copy";
+import { hrCopy } from "@/lib/hr/copy-data";
 
 const migrationSteps = [
   "npm run db:migrate",

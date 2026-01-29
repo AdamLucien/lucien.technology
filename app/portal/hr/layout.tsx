@@ -1,6 +1,6 @@
 import { requirePortalSession } from "@/lib/portal";
 import { HrSubnav } from "@/components/portal/HrSubnav";
-import { hrCopy } from "@/lib/hr/copy";
+import { hrCopy } from "@/lib/hr/copy-data";
 
 const navItems = [
   { href: "/portal/hr", label: "Overview" },

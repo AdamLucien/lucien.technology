@@ -4,7 +4,7 @@ import { StatusBadge } from "@/components/portal/StatusBadge";
 import { getOutreachBadge, getMetaBadge } from "@/lib/status-badges";
 import { runOutreachJob } from "@/lib/outreach/jobs";
 import { CopyButton } from "@/components/portal/CopyButton";
-import { hrCopy } from "@/lib/hr/copy";
+import { hrCopy } from "@/lib/hr/copy-data";
 import { OutreachTemplatePicker } from "@/components/portal/OutreachTemplatePicker";
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>

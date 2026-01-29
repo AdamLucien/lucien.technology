@@ -3,7 +3,7 @@ import { requireLucienStaff, requirePortalSession } from "@/lib/portal";
 import { runScoutJob } from "@/lib/scout/job";
 import { StatusBadge } from "@/components/portal/StatusBadge";
 import { getMetaBadge } from "@/lib/status-badges";
-import { hrCopy } from "@/lib/hr/copy";
+import { hrCopy } from "@/lib/hr/copy-data";
 import { HrImportToolkit } from "@/components/portal/HrImportToolkit";
 import {
   commitTalentImport,

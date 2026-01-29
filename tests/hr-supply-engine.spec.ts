@@ -96,57 +96,6 @@ const cleanupByOrgName = async (orgName: string, tag?: string) => {
   await prisma.org.delete({ where: { id: org.id } });
 };
 
-const cleanupByInquiryLabel = async (label: string, tag: string) => {
-  const inquiries = await prisma.inquiry.findMany({ where: { organization: label } });
-  if (inquiries.length === 0) return;
-
-  const inquiryIds = inquiries.map((inquiry) => inquiry.id);
-  const engagements = await prisma.engagement.findMany({
-    where: { inquiryId: { in: inquiryIds } },
-    select: { id: true },
-  });
-  const engagementIds = engagements.map((engagement) => engagement.id);
-
-  const intents = await prisma.staffingIntent.findMany({
-    where: { inquiryId: { in: inquiryIds } },
-    select: { id: true },
-  });
-  const intentIds = intents.map((intent) => intent.id);
-
-  if (intentIds.length > 0) {
-    await prisma.talentMatch.deleteMany({ where: { staffingIntentId: { in: intentIds } } });
-    await prisma.outreachLog.deleteMany({ where: { staffingIntentId: { in: intentIds } } });
-  }
-
-  if (engagementIds.length > 0) {
-    await prisma.talentAssignment.deleteMany({ where: { engagementId: { in: engagementIds } } });
-  }
-
-  await prisma.emailJob.deleteMany({ where: { idempotencyKey: { contains: tag } } });
-  await prisma.scopeProposal.deleteMany({ where: { inquiryId: { in: inquiryIds } } });
-  await prisma.engagement.deleteMany({ where: { inquiryId: { in: inquiryIds } } });
-  await prisma.staffingIntent.deleteMany({ where: { inquiryId: { in: inquiryIds } } });
-  await prisma.inquiry.deleteMany({ where: { id: { in: inquiryIds } } });
-
-  const profiles = await prisma.talentProfile.findMany({
-    where: {
-      OR: [
-        { email: { contains: tag } },
-        { linkedInUrl: { contains: tag } },
-        { xingUrl: { contains: tag } },
-      ],
-    },
-    select: { id: true },
-  });
-  const profileIds = profiles.map((profile) => profile.id);
-  if (profileIds.length > 0) {
-    await prisma.outreachLog.deleteMany({ where: { talentProfileId: { in: profileIds } } });
-    await prisma.talentMatch.deleteMany({ where: { talentProfileId: { in: profileIds } } });
-    await prisma.talentSignal.deleteMany({ where: { profileId: { in: profileIds } } });
-    await prisma.talentProfile.deleteMany({ where: { id: { in: profileIds } } });
-  }
-};
-
 const createInquiryViaApi = async (page: Page, payload: Record<string, unknown>) => {
   const response = await page.request.post("/api/inquiry", {
     data: payload,
@@ -446,7 +395,7 @@ test("demand to HR supply flow", async ({ page }) => {
   await cleanupByOrgName(orgName, tag);
 });
 
-test("outreach idempotency", async ({ page }) => {
+test("outreach idempotency", async () => {
   const tag = `e2e-outreach-${Date.now()}`;
   const seed = await seedOutreachScenario(tag);
 

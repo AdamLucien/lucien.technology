@@ -10,6 +10,21 @@ Demand → Supply → Match → Outreach → Assign → Fulfill
 5) **Assign** creates TalentAssignment / EngagementMember.
 6) **Fulfill** updates intent state when roles are filled.
 
+## Quickstart for operators
+1) **Demand → StaffingIntent**  
+   - Create inquiry → scope → convert to engagement.  
+   - Staffing intent is auto-created (DRAFT → ACTIVE).
+2) **Radar imports**  
+   - Import via CSV/Excel/Paste/JSON or add manual profiles.  
+   - Signals are created for traceability.
+3) **Run matching**  
+   - Go to `/portal/hr/staffing` and click **Run matching**.
+4) **Run outreach**  
+   - Email jobs (if SMTP configured) or manual LinkedIn/Xing tasks.
+5) **Assign + fulfill**  
+   - Assign the best match → intent becomes **FULFILLED**.  
+   - Badges show staffing/outreach status on inquiry/scope/engagement pages.
+
 ## Operator workflow (checklist)
 1) **Create demand**  
    - Submit an inquiry → finalize scope → convert to engagement.
@@ -38,6 +53,8 @@ Imports support:
 - JSON upload (array of objects)
 - Manual add (quick entry)
 
+See `docs/hr-imports.md` for templates and field mappings.
+
 ### Required fields
 At least one of the following per row:
 - `email` OR `linkedInUrl` OR `xingUrl` OR `dedupeKey`
@@ -51,42 +68,42 @@ These must match taxonomy IDs:
 - `engagementModes`
 
 ### CSV templates
-**LinkedIn minimal**
+**LinkedIn export-ish**
 ```
-firstName,lastName,email,linkedInUrl,primaryRole,domains
-Avery,Lee,avery@example.com,https://linkedin.com/in/avery-lee,systems_architect,ai_architecture
-```
-
-**Universal extended**
-```
-fullName,email,linkedInUrl,xingUrl,primaryRole,secondaryRoles,domains,seniority,availabilityWindow,engagementModes,languages,rateBand,externalId,dedupeKey
-Avery Lee,avery@example.com,https://linkedin.com/in/avery-lee,,systems_architect,solution_architect|data_architect,ai_architecture|observability,ic_senior,two_four_weeks,remote|hybrid,en|de,200-250,crm-123,
+fullName,email,linkedInUrl,primaryRoleId,secondaryRoleIds,domainIds,seniorityId,geo,languages,notes
+Avery Lee,avery@example.com,https://linkedin.com/in/avery-lee,systems_architect,solution_architect|data_architect,ai_architecture|observability,ic_senior,Berlin,en|de,Open to hybrid roles
 ```
 
-**URL-only signals**
+**Universal minimal**
 ```
-fullName,linkedInUrl,externalId,dedupeKey
-Avery Lee,https://linkedin.com/in/avery-lee,crm-123,
+fullName,email,profileUrl,notes
+Avery Lee,avery@example.com,https://linkedin.com/in/avery-lee,Prefers remote delivery
+```
+
+**Partner directory**
+```
+fullName,email,company,roleText,skillsText,profileUrl
+Avery Lee,avery@example.com,SignalWorks GmbH,Platform architect,System architecture|Observability,https://linkedin.com/in/avery-lee
 ```
 
 ## Outreach templates
 **linkedin_intro_v1**
 ```
-Hi {{name}}, we are staffing a role that matches your background. Would you be open to a quick intro call this week?
+Hi {firstName}, we are staffing a {roleLabel} role with {orgName}. Would you be open to a quick intro call? {callToAction}
 ```
 
 **linkedin_followup_v1**
 ```
-Hi {{name}}, just following up on the opportunity I shared earlier. Happy to send details if you are interested.
+Hi {firstName}, just following up on the {roleLabel} opportunity with {orgName}. {callToAction}
 ```
 
 **email_intro_v1**
 ```
-Subject: Opportunity: {{role}} for {{engagement}}
+Subject: Opportunity: {role} for {engagement}
 
-Hi {{name}},
+Hi {name},
 
-We are staffing a {{role}} role on {{engagement}}. Reply if you are open to a quick conversation.
+We are staffing a {role} role on {engagement}. Reply if you are open to a quick conversation.
 
 Lucien
 ```

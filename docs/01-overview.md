@@ -24,3 +24,7 @@ Defined in `prisma/schema.prisma` and enforced in `lib/portal.ts` + API routes.
 - Engagement operations: engagement status/stage, milestones, deliverables, documents, change requests, and controlled edits. See `app/portal/engagements/*`, `app/portal/change-requests/*`, and `lib/editing.ts`.
 - HR + talent: engagement staffing, time entries, tasks, terms, and partner talent profiles/signals. See `app/portal/hr/page.tsx`, `lib/talent/*`, and `app/api/partners/signal/route.ts`.
 - Notifications + audit logging: `lib/notifications.ts` and `lib/audit.ts` with display under `/portal/notifications` and the portal bell.
+
+## HR supply docs
+- `docs/hr-supply-engine.md` — operator workflow and lifecycle.
+- `docs/hr-imports.md` — import modes, templates, and mapping rules.

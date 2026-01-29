@@ -4,3 +4,9 @@ node_modules/
 *.log
 dev.db
 dev.db.*
+test-results/
+playwright-report/
+.last-run.json
+error-context.md
+tsconfig.tsbuildinfo
+.devserver.log

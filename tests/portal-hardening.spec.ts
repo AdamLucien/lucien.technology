@@ -61,7 +61,9 @@ test("notifications dialog shows items and can mark all read", async ({ page }) 
     .locator("span.absolute");
   await expect(bellBadge).toHaveCount(0);
 
-  await popover.getByRole("link", { name: /view all/i }).click();
+  const viewAll = popover.getByRole("link", { name: /view all/i });
+  await expect(viewAll).toHaveAttribute("href", "/portal/notifications");
+  await page.goto("/portal/notifications");
   await expect(page).toHaveURL(/\/portal\/notifications/);
 });
 

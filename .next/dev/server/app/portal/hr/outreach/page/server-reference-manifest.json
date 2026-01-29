@@ -1,0 +1,20 @@
+{
+  "node": {
+    "00ef2df819c25c053a4662d51b8409ddf683b9bb2b": {
+      "workers": {
+        "app/portal/hr/outreach/page": {
+          "moduleId": "[project]/.next-internal/server/app/portal/hr/outreach/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/portal/hr/outreach/page.tsx [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_0",
+          "filename": "app/portal/hr/outreach/page.tsx"
+        }
+      },
+      "layer": {
+        "app/portal/hr/outreach/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_0",
+      "filename": "app/portal/hr/outreach/page.tsx"
+    }
+  },
+  "edge": {}
+}

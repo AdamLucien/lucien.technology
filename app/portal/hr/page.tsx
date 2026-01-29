@@ -396,6 +396,7 @@ type HrPageProps = {
 };
 
 export default async function HrPage({ searchParams }: HrPageProps) {
+  const resolvedSearchParams = await Promise.resolve(searchParams);
   const session = await requirePortalSession();
   const scope = getOrgScope(session.user.role, session.user.orgId);
   const isLucienStaff =
@@ -405,8 +406,8 @@ export default async function HrPage({ searchParams }: HrPageProps) {
   const getSearchParam = (value: string | string[] | undefined) =>
     typeof value === "string" ? value : Array.isArray(value) ? value[0] : undefined;
 
-  const talentStatusParam = getSearchParam(searchParams?.talentStatus);
-  const talentDomainParam = getSearchParam(searchParams?.talentDomain);
+  const talentStatusParam = getSearchParam(resolvedSearchParams?.talentStatus);
+  const talentDomainParam = getSearchParam(resolvedSearchParams?.talentDomain);
   const talentStatusFilterRaw = talentStatusOptions.includes(
     talentStatusParam as TalentStatus,
   )
@@ -417,7 +418,7 @@ export default async function HrPage({ searchParams }: HrPageProps) {
   )
     ? (talentDomainParam as string)
     : "all";
-  const talentId = getSearchParam(searchParams?.talent);
+  const talentId = getSearchParam(resolvedSearchParams?.talent);
   const talentStatusLabelMap: Record<TalentStatus, string> = {
     NEW: t("portal.hr.talent.status.new"),
     REVIEWED: t("portal.hr.talent.status.reviewed"),
@@ -777,6 +778,68 @@ export default async function HrPage({ searchParams }: HrPageProps) {
           Track staffing, time entries, responsibilities, and engagement terms
           with audit-ready clarity.
         </p>
+      </div>
+
+      <div className="rounded-2xl border border-line/80 bg-soft p-6">
+        <div className="text-xs uppercase tracking-[0.2em] text-slate">
+          Quickstart
+        </div>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <ol className="space-y-3 text-sm text-muted">
+            <li>
+              <span className="text-ash">1) Create demand.</span> Submit an
+              inquiry, then finalize scope and convert to an engagement.
+            </li>
+            <li>
+              <span className="text-ash">2) Staffing intent appears.</span>{" "}
+              Roles + requirements are derived automatically from the scope.
+            </li>
+            <li>
+              <span className="text-ash">3) Run matching.</span> Review suggested
+              talent and shortlist.
+            </li>
+            <li>
+              <span className="text-ash">4) Run outreach.</span> Email candidates
+              or complete manual LinkedIn/Xing tasks.
+            </li>
+            <li>
+              <span className="text-ash">5) Assign talent.</span> Create
+              assignments to fulfill roles and mark staffing fulfilled.
+            </li>
+          </ol>
+          <div className="flex flex-col items-start gap-3 text-xs uppercase tracking-[0.2em]">
+            <Link
+              href="/request-scope"
+              className="btn-animate btn-primary rounded-full px-4 py-2 text-[0.6rem]"
+            >
+              Create inquiry
+            </Link>
+            <Link
+              href="/portal/hr/staffing"
+              className="rounded-full border border-line/80 px-4 py-2 text-[0.6rem] text-ash"
+            >
+              Go to staffing
+            </Link>
+            <Link
+              href="/portal/hr/radar"
+              className="rounded-full border border-line/80 px-4 py-2 text-[0.6rem] text-ash"
+            >
+              Go to radar
+            </Link>
+            <Link
+              href="/portal/hr/outreach"
+              className="rounded-full border border-line/80 px-4 py-2 text-[0.6rem] text-ash"
+            >
+              Go to outreach
+            </Link>
+            {totalIntents === 0 && (
+              <div className="text-xs text-muted normal-case">
+                No staffing intents yet. They are created automatically after an
+                inquiry is submitted.
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">

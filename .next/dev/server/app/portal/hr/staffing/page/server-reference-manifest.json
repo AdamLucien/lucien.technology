@@ -1,0 +1,35 @@
+{
+  "node": {
+    "4049ac9148365d0f7dd939b131e51acf91c088d6d4": {
+      "workers": {
+        "app/portal/hr/staffing/page": {
+          "moduleId": "[project]/.next-internal/server/app/portal/hr/staffing/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/portal/hr/staffing/page.tsx [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_1",
+          "filename": "app/portal/hr/staffing/page.tsx"
+        }
+      },
+      "layer": {
+        "app/portal/hr/staffing/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_1",
+      "filename": "app/portal/hr/staffing/page.tsx"
+    },
+    "40ccf88182eb90fe78f089ca013b98393bb64948c0": {
+      "workers": {
+        "app/portal/hr/staffing/page": {
+          "moduleId": "[project]/.next-internal/server/app/portal/hr/staffing/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/portal/hr/staffing/page.tsx [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_0",
+          "filename": "app/portal/hr/staffing/page.tsx"
+        }
+      },
+      "layer": {
+        "app/portal/hr/staffing/page": "rsc"
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_0",
+      "filename": "app/portal/hr/staffing/page.tsx"
+    }
+  },
+  "edge": {}
+}

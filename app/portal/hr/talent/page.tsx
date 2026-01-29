@@ -1,29 +1,94 @@
 import Link from "next/link";
-import { TalentStatus } from "@prisma/client";
+import { TalentContactStatus, TalentStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requirePortalSession } from "@/lib/portal";
 import { StatusBadge } from "@/components/portal/StatusBadge";
 import { getTalentContactStatusBadge, getTalentStatusBadge } from "@/lib/status-badges";
+import { domainOptions } from "@/lib/talent/taxonomy";
+import { t } from "@/lib/i18n";
 
 export default async function TalentListPage({
   searchParams,
 }: {
-  searchParams?: { status?: string | string[] };
+  searchParams?: {
+    status?: string | string[];
+    contactStatus?: string | string[];
+    domain?: string | string[];
+  };
 }) {
+  const resolvedSearchParams = await Promise.resolve(searchParams);
   await requirePortalSession();
 
-  const statusParam = Array.isArray(searchParams?.status)
-    ? searchParams?.status[0]
-    : searchParams?.status;
+  const statusParam = Array.isArray(resolvedSearchParams?.status)
+    ? resolvedSearchParams?.status[0]
+    : resolvedSearchParams?.status;
+  const contactStatusParam = Array.isArray(resolvedSearchParams?.contactStatus)
+    ? resolvedSearchParams?.contactStatus[0]
+    : resolvedSearchParams?.contactStatus;
+  const domainParam = Array.isArray(resolvedSearchParams?.domain)
+    ? resolvedSearchParams?.domain[0]
+    : resolvedSearchParams?.domain;
 
   const isTalentStatus = (value: string): value is TalentStatus =>
     Object.values(TalentStatus).includes(value as TalentStatus);
+  const isTalentContactStatus = (value: string): value is TalentContactStatus =>
+    Object.values(TalentContactStatus).includes(value as TalentContactStatus);
 
-  const profiles = await prisma.talentProfile.findMany({
-    where: statusParam && isTalentStatus(statusParam) ? { status: statusParam } : {},
-    include: { _count: { select: { matches: true } } },
-    orderBy: { updatedAt: "desc" },
-  });
+  const domainFilter = domainOptions.some((option) => option.id === domainParam)
+    ? (domainParam as string)
+    : null;
+
+  const [profiles, profileCounts] = await Promise.all([
+    prisma.talentProfile.findMany({
+      where: {
+        ...(statusParam && isTalentStatus(statusParam) ? { status: statusParam } : {}),
+        ...(contactStatusParam && isTalentContactStatus(contactStatusParam)
+          ? { contactStatus: contactStatusParam }
+          : {}),
+        ...(domainFilter ? { domains: { has: domainFilter } } : {}),
+      },
+      include: { _count: { select: { matches: true } } },
+      orderBy: { updatedAt: "desc" },
+    }),
+    prisma.talentProfile.findMany({
+      select: { status: true, contactStatus: true, domains: true },
+    }),
+  ]);
+
+  const statusCounts = profileCounts.reduce<Record<string, number>>((acc, item) => {
+    acc[item.status] = (acc[item.status] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const contactCounts = profileCounts.reduce<Record<string, number>>((acc, item) => {
+    acc[item.contactStatus] = (acc[item.contactStatus] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const domainCounts = profileCounts.reduce<Record<string, number>>((acc, item) => {
+    for (const domain of item.domains ?? []) {
+      acc[domain] = (acc[domain] ?? 0) + 1;
+    }
+    return acc;
+  }, {});
+
+  const buildUrl = (overrides: {
+    status?: string | null;
+    contactStatus?: string | null;
+    domain?: string | null;
+  }) => {
+    const params = new URLSearchParams();
+    const nextStatus = overrides.status ?? (statusParam ?? null);
+    const nextContact = overrides.contactStatus ?? (contactStatusParam ?? null);
+    const nextDomain = overrides.domain ?? (domainParam ?? null);
+
+    if (nextStatus) params.set("status", nextStatus);
+    if (nextContact) params.set("contactStatus", nextContact);
+    if (nextDomain) params.set("domain", nextDomain);
+
+    const query = params.toString();
+    return query ? `/portal/hr/talent?${query}` : "/portal/hr/talent";
+  };
 
   return (
     <div className="space-y-8">
@@ -35,9 +100,90 @@ export default async function TalentListPage({
         </p>
       </div>
 
+      <div className="grid gap-4 rounded-2xl border border-line/80 bg-soft p-6 text-xs uppercase tracking-[0.2em] text-slate md:grid-cols-3">
+        <div className="space-y-2">
+          <div>Status</div>
+          <div className="flex flex-wrap gap-2 text-[0.6rem]">
+            <Link
+              href={buildUrl({ status: null })}
+              className="rounded-full border border-line/80 px-3 py-1 text-ash"
+            >
+              All ({profileCounts.length})
+            </Link>
+            {Object.values(TalentStatus).map((status) => (
+              <Link
+                key={status}
+                href={buildUrl({ status })}
+                className="rounded-full border border-line/80 px-3 py-1 text-ash"
+              >
+                {status} ({statusCounts[status] ?? 0})
+              </Link>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-2">
+          <div>Contact</div>
+          <div className="flex flex-wrap gap-2 text-[0.6rem]">
+            <Link
+              href={buildUrl({ contactStatus: null })}
+              className="rounded-full border border-line/80 px-3 py-1 text-ash"
+            >
+              All ({profileCounts.length})
+            </Link>
+            {Object.values(TalentContactStatus).map((status) => (
+              <Link
+                key={status}
+                href={buildUrl({ contactStatus: status })}
+                className="rounded-full border border-line/80 px-3 py-1 text-ash"
+              >
+                {status} ({contactCounts[status] ?? 0})
+              </Link>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-2">
+          <div>Domain</div>
+          <div className="flex flex-wrap gap-2 text-[0.6rem]">
+            <Link
+              href={buildUrl({ domain: null })}
+              className="rounded-full border border-line/80 px-3 py-1 text-ash"
+            >
+              All ({profileCounts.length})
+            </Link>
+            {domainOptions.map((domain) => (
+              <Link
+                key={domain.id}
+                href={buildUrl({ domain: domain.id })}
+                className="rounded-full border border-line/80 px-3 py-1 text-ash"
+              >
+                {t(domain.labelKey)} ({domainCounts[domain.id] ?? 0})
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {profiles.length === 0 ? (
-        <div className="rounded-2xl border border-line/80 bg-soft p-6 text-sm text-muted">
-          No talent profiles yet.
+        <div className="rounded-2xl border border-line/80 bg-soft p-6 space-y-3 text-sm text-muted">
+          <div className="text-ash">No talent profiles yet.</div>
+          <p>
+            Talent enters the system via partner submissions, CSV imports, or the
+            scout job (WEB provider).
+          </p>
+          <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.2em]">
+            <Link
+              href="/portal/hr/radar"
+              className="btn-animate btn-primary rounded-full px-4 py-2 text-[0.6rem]"
+            >
+              Import CSV
+            </Link>
+            <Link
+              href="/portal/hr/radar"
+              className="rounded-full border border-line/80 px-4 py-2 text-[0.6rem] text-ash"
+            >
+              Go to radar
+            </Link>
+          </div>
         </div>
       ) : (
         <div className="space-y-3">

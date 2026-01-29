@@ -132,6 +132,21 @@ export default async function RadarPage() {
   const session = await requirePortalSession();
   requireLucienStaff(session.user.role);
 
+  const webProvider = process.env.WEB_SEARCH_PROVIDER;
+  const webWarnings: string[] = [];
+  if (!webProvider) {
+    webWarnings.push("Set WEB_SEARCH_PROVIDER to enable web scouting.");
+  } else if (webProvider === "serpapi" && !process.env.SERPAPI_KEY) {
+    webWarnings.push("SERPAPI_KEY is missing for serpapi provider.");
+  } else if (
+    webProvider === "google_cse" &&
+    (!process.env.GOOGLE_CSE_KEY || !process.env.GOOGLE_CSE_CX)
+  ) {
+    webWarnings.push("GOOGLE_CSE_KEY and GOOGLE_CSE_CX are required for google_cse.");
+  } else if (webProvider === "custom" && !process.env.WEB_SEARCH_ENDPOINT) {
+    webWarnings.push("WEB_SEARCH_ENDPOINT is required for custom provider.");
+  }
+
   const [searchIntents, scoutRuns, signals] = await Promise.all([
     prisma.searchIntent.findMany({
       where: { orgId: session.user.orgId ?? "" },
@@ -159,6 +174,29 @@ export default async function RadarPage() {
         </p>
       </div>
 
+      <div className="rounded-2xl border border-line/80 bg-soft p-6 space-y-3 text-sm text-muted">
+        <div className="text-xs uppercase tracking-[0.2em] text-slate">
+          How radar works
+        </div>
+        <p>
+          <span className="text-ash">Search intents</span> define what to look
+          for. A <span className="text-ash">scout job</span> executes those
+          intents and converts results into talent signals and profiles.
+        </p>
+        {webWarnings.length > 0 && (
+          <div className="rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-xs text-ash">
+            <div className="text-[0.6rem] uppercase tracking-[0.2em] text-slate">
+              Web provider not configured
+            </div>
+            <ul className="mt-2 list-disc space-y-1 pl-4">
+              {webWarnings.map((warning) => (
+                <li key={warning}>{warning}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
       <div className="flex flex-wrap items-center gap-3">
         <StatusBadge {...getMetaBadge(`${searchIntents.length} search intents`)} />
         <StatusBadge {...getMetaBadge(`${scoutRuns.length} recent runs`)} />
@@ -177,6 +215,10 @@ export default async function RadarPage() {
           <h2 className="text-sm uppercase tracking-[0.2em] text-slate">
             Search intents
           </h2>
+          <p className="text-sm text-muted">
+            Define roles or keywords to scout. Intents can be executed on demand
+            or by cron hitting the scout job API.
+          </p>
           {searchIntents.length === 0 ? (
             <p className="text-sm text-muted">No search intents configured.</p>
           ) : (
@@ -229,6 +271,14 @@ export default async function RadarPage() {
           <h2 className="text-sm uppercase tracking-[0.2em] text-slate">
             CSV import
           </h2>
+          <p className="text-sm text-muted">
+            Upload a CSV with headers like{" "}
+            <span className="text-ash">fullName,email,primaryRole,domains</span>.
+            Use <span className="text-ash">|</span> to separate arrays.
+          </p>
+          <div className="rounded-xl border border-line/80 bg-ink px-4 py-3 text-xs text-slate">
+            fullName,email,primaryRole,secondaryRoles,domains,seniority,availabilityWindow,engagementModes,languages,linkedInUrl,xingUrl
+          </div>
           <form action={importCsv} className="space-y-3">
             <input
               type="file"
@@ -244,6 +294,33 @@ export default async function RadarPage() {
             </button>
           </form>
         </div>
+      </div>
+
+      <div className="rounded-2xl border border-line/80 bg-soft p-6 space-y-3">
+        <h2 className="text-sm uppercase tracking-[0.2em] text-slate">
+          Recent scout runs
+        </h2>
+        {scoutRuns.length === 0 ? (
+          <p className="text-sm text-muted">No scout runs yet.</p>
+        ) : (
+          scoutRuns.map((run) => (
+            <div
+              key={run.id}
+              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line/80 bg-ink px-4 py-3 text-sm text-muted"
+            >
+              <div>
+                <div className="text-ash">{run.source}</div>
+                <div className="text-xs text-slate">
+                  Found {run.foundCount} · Created {run.createdCount} · Updated{" "}
+                  {run.updatedCount} · Deduped {run.dedupedCount}
+                </div>
+              </div>
+              <div className="text-xs uppercase tracking-[0.2em] text-slate">
+                {run.status}
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       <div className="rounded-2xl border border-line/80 bg-soft p-6 space-y-3">

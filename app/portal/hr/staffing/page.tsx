@@ -133,6 +133,7 @@ export default async function StaffingPage() {
       inquiry: true,
       engagement: true,
       scopeProposal: true,
+      outreachLogs: { select: { id: true, status: true } },
       matches: {
         orderBy: { score: "desc" },
         take: 4,
@@ -153,8 +154,26 @@ export default async function StaffingPage() {
       </div>
 
       {intents.length === 0 ? (
-        <div className="rounded-2xl border border-line/80 bg-soft p-6 text-sm text-muted">
-          No staffing intents yet.
+        <div className="rounded-2xl border border-line/80 bg-soft p-6 space-y-3 text-sm text-muted">
+          <div className="text-ash">No staffing intents yet.</div>
+          <p>
+            Staffing intents are created automatically when a new inquiry is
+            submitted and scoped.
+          </p>
+          <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.2em]">
+            <Link
+              href="/request-scope"
+              className="btn-animate btn-primary rounded-full px-4 py-2 text-[0.6rem]"
+            >
+              Create inquiry
+            </Link>
+            <Link
+              href="/portal/inquiries"
+              className="rounded-full border border-line/80 px-4 py-2 text-[0.6rem] text-ash"
+            >
+              View inquiries
+            </Link>
+          </div>
         </div>
       ) : (
         <div className="space-y-4">
@@ -168,11 +187,25 @@ export default async function StaffingPage() {
             );
             const hasRolesDefined = roles.length > 0;
             const fulfilled = intent.state === "FULFILLED";
+            const outreachCount = intent.outreachLogs.length;
+            const hasMatches = intent.matches.length > 0;
             const subject =
               intent.engagement?.title ??
               intent.inquiry?.organization ??
               intent.scopeProposal?.title ??
               "Staffing intent";
+            const nextStep =
+              intent.state === "DRAFT"
+                ? "Define scope and roles."
+                : !hasRolesDefined
+                  ? "Add roles to the intent."
+                  : !hasMatches
+                    ? "Run matching."
+                    : outreachCount === 0
+                      ? "Run outreach."
+                      : intent.state === "ACTIVE" && !fulfilled
+                        ? "Assign talent."
+                        : "Staffing fulfilled.";
 
             return (
               <div
@@ -241,6 +274,10 @@ export default async function StaffingPage() {
                       )}
                     </div>
                   </div>
+                </div>
+
+                <div className="rounded-xl border border-line/80 bg-ink px-4 py-3 text-xs text-slate">
+                  <span className="text-ash">Next step:</span> {nextStep}
                 </div>
 
                 <div className="flex flex-wrap gap-3">

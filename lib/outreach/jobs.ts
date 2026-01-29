@@ -192,7 +192,7 @@ export async function runOutreachJob({
                 where: { id: outreach.id },
                 data: { status: "SENT", sentAt: existing.sentAt ?? now() },
               });
-              sent += 1;
+              skipped += 1;
               continue;
             }
             if (existing.status === "FAILED") {
@@ -200,7 +200,7 @@ export async function runOutreachJob({
                 where: { id: outreach.id },
                 data: { status: "FAILED", error: existing.error ?? "send_failed" },
               });
-              failed += 1;
+              skipped += 1;
               continue;
             }
           }

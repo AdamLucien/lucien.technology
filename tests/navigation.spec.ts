@@ -215,6 +215,28 @@ test("client can edit proposed change request but not after approval", async ({ 
   await page.getByRole("button", { name: "user@civic.example", exact: true }).click();
   await page.waitForURL(/\/portal/);
   await completeOnboardingIfNeeded(page);
+  await page.goto("/portal/engagements");
+  const engagementHref = await page
+    .locator('a[href^="/portal/engagements/"]')
+    .first()
+    .getAttribute("href");
+  if (!engagementHref) {
+    throw new Error("No engagement available for change request.");
+  }
+  const engagementId = engagementHref.split("/").pop();
+  if (!engagementId) {
+    throw new Error("Invalid engagement id.");
+  }
+  const createRequest = await page.request.post("/api/portal/change-requests", {
+    data: {
+      engagementId,
+      title: `E2E proposed ${Date.now()}`,
+      description: "Automated proposed change request for edit flow.",
+      impact: "scope",
+      severity: "low",
+    },
+  });
+  expect(createRequest.ok()).toBeTruthy();
   await page.goto("/portal/change-requests");
   await completeOnboardingIfNeeded(page);
   await expect(

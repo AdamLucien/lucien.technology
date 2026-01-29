@@ -6,7 +6,7 @@ export const hrCopy = {
     subtitle: "People, time, responsibilities, and engagement terms.",
     description:
       "Track staffing, time entries, responsibilities, and engagement terms with audit-ready clarity.",
-    quickstartTitle: "Quickstart",
+    quickstartTitle: "What should I do next?",
     quickstartSteps: [
       "Create demand: submit an inquiry, finalize scope, convert to engagement.",
       "Staffing intent appears automatically with roles and requirements.",
@@ -52,8 +52,9 @@ export const hrCopy = {
     title: "Talent profiles",
     subtitle: "Profiles captured from partners, scouting, and internal sources.",
     whatNext: [
-      "Import new profiles via Radar.",
-      "Review contact status and matches.",
+      "Import or scout new profiles via Radar.",
+      "Review profiles and contact status.",
+      "Open a profile to check matches and outreach history.",
     ],
     empty: {
       title: "No talent profiles yet.",
@@ -81,7 +82,7 @@ export const hrCopy = {
     csvBody:
       "Use CSV, Excel, paste, or JSON to import talent. Arrays should be separated with |.",
     csvExample:
-      "fullName,email,primaryRole,secondaryRoles,domains,seniority,availabilityWindow,engagementModes,languages,linkedInUrl,xingUrl",
+      "fullName,email,profileUrl,notes",
   },
   outreach: {
     title: "Outreach queue",
@@ -142,36 +143,46 @@ export const hrCopy = {
     "email",
     "linkedInUrl",
     "xingUrl",
+    "profileUrl",
     "primaryRole",
     "secondaryRoles",
     "domains",
     "seniority",
+    "geo",
     "availabilityWindow",
     "engagementModes",
     "languages",
     "rateBand",
+    "notes",
     "externalId",
     "dedupeKey",
   ],
-  importExtraFields: ["firstName", "lastName", "title", "company"],
+  importExtraFields: [
+    "firstName",
+    "lastName",
+    "title",
+    "company",
+    "roleText",
+    "skillsText",
+  ],
   importTemplates: {
-    linkedInMinimal:
-      "firstName,lastName,email,linkedInUrl,primaryRole,domains\nAvery,Lee,avery@example.com,https://linkedin.com/in/avery-lee,systems_architect,ai_architecture",
-    universalExtended:
-      "fullName,email,linkedInUrl,xingUrl,primaryRole,secondaryRoles,domains,seniority,availabilityWindow,engagementModes,languages,rateBand,externalId,dedupeKey\nAvery Lee,avery@example.com,https://linkedin.com/in/avery-lee,,systems_architect,solution_architect|data_architect,ai_architecture|observability,ic_senior,two_four_weeks,remote|hybrid,en|de,200-250,crm-123,\n",
-    urlOnly:
-      "fullName,linkedInUrl,externalId,dedupeKey\nAvery Lee,https://linkedin.com/in/avery-lee,crm-123,",
+    linkedinExport:
+      "fullName,email,linkedInUrl,primaryRoleId,secondaryRoleIds,domainIds,seniorityId,geo,languages,notes\nAvery Lee,avery@example.com,https://linkedin.com/in/avery-lee,systems_architect,solution_architect|data_architect,ai_architecture|observability,ic_senior,Berlin,en|de,Open to hybrid roles",
+    universalMinimal:
+      "fullName,email,profileUrl,notes\nAvery Lee,avery@example.com,https://linkedin.com/in/avery-lee,Prefers remote delivery",
+    partnerDirectory:
+      "fullName,email,company,roleText,skillsText,profileUrl\nAvery Lee,SignalWorks,SignalWorks GmbH,Platform architect,System architecture|Observability,https://linkedin.com/in/avery-lee",
   },
   outreachTemplates: {
     linkedin_intro_v1: {
       label: "LinkedIn intro v1",
       message:
-        "Hi {{name}}, we are staffing a role that matches your background. Would you be open to a quick intro call this week?",
+        "Hi {firstName}, we are staffing a {roleLabel} role with {orgName}. Would you be open to a quick intro call? {callToAction}",
     },
     linkedin_followup_v1: {
       label: "LinkedIn follow-up v1",
       message:
-        "Hi {{name}}, just following up on the opportunity I shared earlier. Happy to send details if you are interested.",
+        "Hi {firstName}, just following up on the {roleLabel} opportunity with {orgName}. {callToAction}",
     },
     email_intro_v1: {
       label: "Email intro v1",

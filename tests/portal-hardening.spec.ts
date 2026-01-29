@@ -55,9 +55,11 @@ test("notifications dialog shows items and can mark all read", async ({ page }) 
 
   const markAll = popover.getByRole("button", { name: /mark all read/i });
   await markAll.click();
-  await expect(
-    page.locator('button[aria-label="Notifications"] span'),
-  ).toHaveCount(0);
+  const bellBadge = page
+    .getByRole("button", { name: "Notifications" })
+    .first()
+    .locator("span.absolute");
+  await expect(bellBadge).toHaveCount(0);
 
   await popover.getByRole("link", { name: /view all/i }).click();
   await expect(page).toHaveURL(/\/portal\/notifications/);

@@ -1,11 +1,21 @@
 import { createHash } from "crypto";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { t } from "@/lib/i18n";
 import {
   availabilityOptions,
+  availabilityIds,
   domainIds,
+  domainOptions,
+  engagementModeIds,
   engagementModeOptions,
+  languageIds,
+  languageOptions,
+  rateBandIds,
+  rateBandOptions,
+  roleGroups,
   roleIds,
+  seniorityIds,
   seniorityOptions,
 } from "@/lib/talent/taxonomy";
 
@@ -38,6 +48,8 @@ type NormalizedRow = {
   email: string | null;
   linkedInUrl: string | null;
   xingUrl: string | null;
+  geo: string | null;
+  notes: string | null;
   primaryRole: string | null;
   secondaryRoles: string[];
   domains: string[];
@@ -52,9 +64,38 @@ type NormalizedRow = {
   errors: string[];
 };
 
-const availabilityIds = availabilityOptions.map((option) => option.id);
-const engagementModeIds = engagementModeOptions.map((option) => option.id);
-const seniorityIds = seniorityOptions.map((option) => option.id);
+const normalizeToken = (value: string) =>
+  value.toLowerCase().replace(/[^a-z0-9]+/g, "").trim();
+
+const buildLabelMap = (items: Array<{ id: string; labelKey: string }>) => {
+  const map = new Map<string, string>();
+  items.forEach((item) => {
+    map.set(normalizeToken(item.id), item.id);
+    map.set(normalizeToken(t(item.labelKey)), item.id);
+  });
+  return map;
+};
+
+const roleOptions = roleGroups.flatMap((group) => group.roles);
+const roleLabelMap = buildLabelMap(roleOptions);
+const domainLabelMap = buildLabelMap(domainOptions);
+const seniorityLabelMap = buildLabelMap(seniorityOptions);
+const availabilityLabelMap = buildLabelMap(availabilityOptions);
+const engagementModeLabelMap = buildLabelMap(engagementModeOptions);
+const languageLabelMap = buildLabelMap(languageOptions);
+const rateBandLabelMap = buildLabelMap(rateBandOptions);
+
+const resolveTaxonomyId = (
+  value: string,
+  ids: string[],
+  labelMap: Map<string, string>,
+) => {
+  const normalized = normalizeToken(value);
+  if (!normalized) return null;
+  const direct = ids.find((id) => normalizeToken(id) === normalized);
+  if (direct) return direct;
+  return labelMap.get(normalized) ?? null;
+};
 
 const clean = (value: unknown) =>
   typeof value === "string" ? value.trim() : value == null ? "" : String(value);
@@ -101,42 +142,105 @@ const normalizeRow = (row: ImportRow, mapping: ImportMapping, index: number): No
   const errors: string[] = [];
   const fullName = deriveName(row, mapping);
   const email = getFieldValue(row, mapping, "email") || null;
-  const linkedInUrl = getFieldValue(row, mapping, "linkedInUrl") || null;
-  const xingUrl = getFieldValue(row, mapping, "xingUrl") || null;
-  const primaryRole = getFieldValue(row, mapping, "primaryRole") || null;
-  const secondaryRoles = splitList(getFieldValue(row, mapping, "secondaryRoles"));
-  const domains = splitList(getFieldValue(row, mapping, "domains"));
-  const seniority = getFieldValue(row, mapping, "seniority") || null;
-  const availabilityWindow = getFieldValue(row, mapping, "availabilityWindow") || null;
-  const engagementModes = splitList(getFieldValue(row, mapping, "engagementModes"));
-  const languages = splitList(getFieldValue(row, mapping, "languages"));
-  const rateBand = getFieldValue(row, mapping, "rateBand") || null;
+  const profileUrl = getFieldValue(row, mapping, "profileUrl") || null;
+  let linkedInUrl = getFieldValue(row, mapping, "linkedInUrl") || null;
+  let xingUrl = getFieldValue(row, mapping, "xingUrl") || null;
+  if (profileUrl && !linkedInUrl && !xingUrl) {
+    if (profileUrl.toLowerCase().includes("xing.com")) {
+      xingUrl = profileUrl;
+    } else {
+      linkedInUrl = profileUrl;
+    }
+  }
+  const geo = getFieldValue(row, mapping, "geo") || null;
+  const notesValue = getFieldValue(row, mapping, "notes") || "";
+  const roleText = getFieldValue(row, mapping, "roleText") || "";
+  const skillsText = getFieldValue(row, mapping, "skillsText") || "";
+  const notes =
+    [notesValue, roleText && `Role: ${roleText}`, skillsText && `Skills: ${skillsText}`]
+      .filter(Boolean)
+      .join(" | ") || null;
+
+  const primaryRaw = getFieldValue(row, mapping, "primaryRole") || null;
+  const primaryRole = primaryRaw
+    ? resolveTaxonomyId(primaryRaw, roleIds, roleLabelMap)
+    : null;
+
+  const secondaryRaw = splitList(getFieldValue(row, mapping, "secondaryRoles"));
+  const secondaryRoles = secondaryRaw
+    .map((value) => resolveTaxonomyId(value, roleIds, roleLabelMap))
+    .filter((value): value is string => Boolean(value));
+
+  const domainRaw = splitList(getFieldValue(row, mapping, "domains"));
+  const domains = domainRaw
+    .map((value) => resolveTaxonomyId(value, domainIds, domainLabelMap))
+    .filter((value): value is string => Boolean(value));
+
+  const seniorityRaw = getFieldValue(row, mapping, "seniority") || null;
+  const seniority = seniorityRaw
+    ? resolveTaxonomyId(seniorityRaw, seniorityIds, seniorityLabelMap)
+    : null;
+
+  const availabilityRaw = getFieldValue(row, mapping, "availabilityWindow") || null;
+  const availabilityWindow = availabilityRaw
+    ? resolveTaxonomyId(availabilityRaw, availabilityIds, availabilityLabelMap)
+    : null;
+
+  const engagementRaw = splitList(getFieldValue(row, mapping, "engagementModes"));
+  const engagementModes = engagementRaw
+    .map((value) => resolveTaxonomyId(value, engagementModeIds, engagementModeLabelMap))
+    .filter((value): value is string => Boolean(value));
+
+  const languageRaw = splitList(getFieldValue(row, mapping, "languages"));
+  const languages = languageRaw
+    .map((value) => resolveTaxonomyId(value, languageIds, languageLabelMap))
+    .filter((value): value is string => Boolean(value));
+
+  const rateBandRaw = getFieldValue(row, mapping, "rateBand") || null;
+  const rateBand = rateBandRaw
+    ? resolveTaxonomyId(rateBandRaw, rateBandIds, rateBandLabelMap)
+    : null;
   const externalId = getFieldValue(row, mapping, "externalId") || null;
   const dedupeKey = getFieldValue(row, mapping, "dedupeKey") || null;
 
   if (!email && !linkedInUrl && !xingUrl && !dedupeKey) {
     errors.push("Missing a contact: email, LinkedIn URL, Xing URL, or dedupeKey.");
   }
-  if (primaryRole && !roleIds.includes(primaryRole)) {
-    errors.push(`Invalid primaryRole: ${primaryRole}`);
+  if (primaryRaw && !primaryRole) {
+    errors.push(`Invalid primaryRole: ${primaryRaw}`);
   }
-  const invalidSecondaryRoles = secondaryRoles.filter((role) => !roleIds.includes(role));
+  const invalidSecondaryRoles = secondaryRaw.filter(
+    (role) => !resolveTaxonomyId(role, roleIds, roleLabelMap),
+  );
   if (invalidSecondaryRoles.length > 0) {
     errors.push(`Invalid secondaryRoles: ${invalidSecondaryRoles.join(", ")}`);
   }
-  const invalidDomains = domains.filter((domain) => !domainIds.includes(domain));
+  const invalidDomains = domainRaw.filter(
+    (domain) => !resolveTaxonomyId(domain, domainIds, domainLabelMap),
+  );
   if (invalidDomains.length > 0) {
     errors.push(`Invalid domains: ${invalidDomains.join(", ")}`);
   }
-  if (seniority && !seniorityIds.includes(seniority)) {
-    errors.push(`Invalid seniority: ${seniority}`);
+  if (seniorityRaw && !seniority) {
+    errors.push(`Invalid seniority: ${seniorityRaw}`);
   }
-  if (availabilityWindow && !availabilityIds.includes(availabilityWindow)) {
-    errors.push(`Invalid availabilityWindow: ${availabilityWindow}`);
+  if (availabilityRaw && !availabilityWindow) {
+    errors.push(`Invalid availabilityWindow: ${availabilityRaw}`);
   }
-  const invalidModes = engagementModes.filter((mode) => !engagementModeIds.includes(mode));
+  const invalidModes = engagementRaw.filter(
+    (mode) => !resolveTaxonomyId(mode, engagementModeIds, engagementModeLabelMap),
+  );
   if (invalidModes.length > 0) {
     errors.push(`Invalid engagementModes: ${invalidModes.join(", ")}`);
+  }
+  const invalidLanguages = languageRaw.filter(
+    (language) => !resolveTaxonomyId(language, languageIds, languageLabelMap),
+  );
+  if (invalidLanguages.length > 0) {
+    errors.push(`Invalid languages: ${invalidLanguages.join(", ")}`);
+  }
+  if (rateBandRaw && !rateBand) {
+    errors.push(`Invalid rateBand: ${rateBandRaw}`);
   }
 
   return {
@@ -145,6 +249,8 @@ const normalizeRow = (row: ImportRow, mapping: ImportMapping, index: number): No
     email,
     linkedInUrl,
     xingUrl,
+    geo,
+    notes,
     primaryRole,
     secondaryRoles,
     domains,
@@ -283,6 +389,8 @@ export const commitTalentImport = async ({
       linkedInUrl: normalized.linkedInUrl ?? existing?.linkedInUrl ?? null,
       xingUrl: normalized.xingUrl ?? existing?.xingUrl ?? null,
       locationTimezone: existing?.locationTimezone ?? null,
+      geo: normalized.geo ?? existing?.geo ?? null,
+      notes: normalized.notes ?? existing?.notes ?? null,
     };
 
     const profile = existing

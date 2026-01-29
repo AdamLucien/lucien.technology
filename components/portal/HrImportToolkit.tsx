@@ -42,14 +42,19 @@ const headerAliases: Record<string, string[]> = {
   email: ["email", "emailaddress"],
   linkedInUrl: ["linkedin", "linkedinurl", "linkedinprofile"],
   xingUrl: ["xing", "xingurl"],
-  primaryRole: ["primaryrole", "role", "roleid"],
-  secondaryRoles: ["secondaryroles", "roles"],
-  domains: ["domains", "domain", "industry"],
-  seniority: ["seniority", "level"],
-  availabilityWindow: ["availability", "availabilitywindow"],
-  engagementModes: ["engagementmodes", "modes", "mode"],
-  languages: ["languages", "language"],
-  rateBand: ["rateband", "rate"],
+  profileUrl: ["profileurl", "profile", "url"],
+  primaryRole: ["primaryrole", "primaryroleid", "role", "roleid"],
+  secondaryRoles: ["secondaryroles", "secondaryroleids", "roles"],
+  domains: ["domains", "domain", "domainids", "industry"],
+  seniority: ["seniority", "seniorityid", "level"],
+  availabilityWindow: ["availability", "availabilitywindow", "availabilitywindowid"],
+  engagementModes: ["engagementmodes", "engagementmodeids", "modes", "mode"],
+  languages: ["languages", "language", "languageids"],
+  rateBand: ["rateband", "ratebandid", "rate"],
+  geo: ["geo", "location", "locationgeo"],
+  notes: ["notes", "note"],
+  roleText: ["roletext", "roletitle"],
+  skillsText: ["skillstext", "skills"],
   externalId: ["externalid", "id"],
   dedupeKey: ["dedupekey"],
 };
@@ -630,13 +635,16 @@ export function HrImportToolkit({
         <div className="grid gap-3 md:grid-cols-3 min-w-0">
           {Object.entries(copy.importTemplates).map(([key, template]) => (
             <div key={key} className="space-y-2 min-w-0">
-              <div className="text-xs uppercase tracking-[0.2em] text-slate">
+              <div
+                className="text-xs uppercase tracking-[0.2em] text-slate truncate"
+                title={key}
+              >
                 {key}
               </div>
-              <div className="rounded-xl border border-line/80 bg-ink px-3 py-2 text-xs text-slate whitespace-pre-wrap break-words min-w-0 max-w-full overflow-x-auto">
+              <pre className="rounded-xl border border-line/80 bg-ink px-3 py-2 text-xs text-slate min-w-0 max-w-full max-h-40 overflow-auto whitespace-pre-wrap break-words">
                 {template}
-              </div>
-              <div className="flex gap-2">
+              </pre>
+              <div className="flex flex-wrap gap-2">
                 <CopyButton text={template} label="Copy template" />
                 <button
                   type="button"

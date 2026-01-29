@@ -265,9 +265,9 @@ export default async function RadarPage() {
           </h2>
           <p className="text-sm text-muted">{hrCopy.radar.csvBody}</p>
           <p className="text-xs text-slate">{hrCopy.tooltips.import}</p>
-          <div className="rounded-xl border border-line/80 bg-ink px-4 py-3 text-xs text-slate min-w-0 max-w-full overflow-x-auto whitespace-pre-wrap break-words">
+          <pre className="rounded-xl border border-line/80 bg-ink px-4 py-3 text-xs text-slate min-w-0 max-w-full max-h-32 overflow-auto whitespace-pre-wrap break-words">
             {hrCopy.radar.csvExample}
-          </div>
+          </pre>
           <HrImportToolkit
             previewImport={previewImport}
             commitImport={commitImport}

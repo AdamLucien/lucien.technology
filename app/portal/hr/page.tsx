@@ -20,6 +20,7 @@ import {
   requirePortalSession,
 } from "@/lib/portal";
 import Link from "next/link";
+import { hrCopy } from "@/lib/hr/copy";
 
 const migrationSteps = [
   "npm run db:migrate",
@@ -769,73 +770,43 @@ export default async function HrPage({ searchParams }: HrPageProps) {
     <div className="space-y-8">
       <div className="space-y-2">
         <p className="text-xs uppercase tracking-[0.3em] text-slate">
-          HR oversight
+          {hrCopy.overview.title}
         </p>
         <h1 className="text-2xl font-semibold text-ash">
-          People, time, responsibilities, and engagement terms
+          {hrCopy.overview.subtitle}
         </h1>
-        <p className="text-sm text-muted">
-          Track staffing, time entries, responsibilities, and engagement terms
-          with audit-ready clarity.
-        </p>
+        <p className="text-sm text-muted">{hrCopy.overview.description}</p>
       </div>
 
       <div className="rounded-2xl border border-line/80 bg-soft p-6">
         <div className="text-xs uppercase tracking-[0.2em] text-slate">
-          Quickstart
+          {hrCopy.overview.quickstartTitle}
         </div>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <ol className="space-y-3 text-sm text-muted">
-            <li>
-              <span className="text-ash">1) Create demand.</span> Submit an
-              inquiry, then finalize scope and convert to an engagement.
-            </li>
-            <li>
-              <span className="text-ash">2) Staffing intent appears.</span>{" "}
-              Roles + requirements are derived automatically from the scope.
-            </li>
-            <li>
-              <span className="text-ash">3) Run matching.</span> Review suggested
-              talent and shortlist.
-            </li>
-            <li>
-              <span className="text-ash">4) Run outreach.</span> Email candidates
-              or complete manual LinkedIn/Xing tasks.
-            </li>
-            <li>
-              <span className="text-ash">5) Assign talent.</span> Create
-              assignments to fulfill roles and mark staffing fulfilled.
-            </li>
+            {hrCopy.overview.quickstartSteps.map((step, index) => (
+              <li key={step}>
+                <span className="text-ash">{index + 1})</span> {step}
+              </li>
+            ))}
           </ol>
           <div className="flex flex-col items-start gap-3 text-xs uppercase tracking-[0.2em]">
-            <Link
-              href="/request-scope"
-              className="btn-animate btn-primary rounded-full px-4 py-2 text-[0.6rem]"
-            >
-              Create inquiry
-            </Link>
-            <Link
-              href="/portal/hr/staffing"
-              className="rounded-full border border-line/80 px-4 py-2 text-[0.6rem] text-ash"
-            >
-              Go to staffing
-            </Link>
-            <Link
-              href="/portal/hr/radar"
-              className="rounded-full border border-line/80 px-4 py-2 text-[0.6rem] text-ash"
-            >
-              Go to radar
-            </Link>
-            <Link
-              href="/portal/hr/outreach"
-              className="rounded-full border border-line/80 px-4 py-2 text-[0.6rem] text-ash"
-            >
-              Go to outreach
-            </Link>
+            {hrCopy.overview.ctas.map((cta) => (
+              <Link
+                key={`${cta.href}-${cta.label}`}
+                href={cta.href}
+                className={
+                  cta.tone === "primary"
+                    ? "btn-animate btn-primary rounded-full px-4 py-2 text-[0.6rem]"
+                    : "rounded-full border border-line/80 px-4 py-2 text-[0.6rem] text-ash"
+                }
+              >
+                {cta.label}
+              </Link>
+            ))}
             {totalIntents === 0 && (
               <div className="text-xs text-muted normal-case">
-                No staffing intents yet. They are created automatically after an
-                inquiry is submitted.
+                {hrCopy.overview.noIntents}
               </div>
             )}
           </div>

@@ -4,6 +4,8 @@ import { StatusBadge } from "@/components/portal/StatusBadge";
 import { getOutreachBadge, getMetaBadge } from "@/lib/status-badges";
 import { runOutreachJob } from "@/lib/outreach/jobs";
 import { CopyButton } from "@/components/portal/CopyButton";
+import { hrCopy } from "@/lib/hr/copy";
+import { OutreachTemplatePicker } from "@/components/portal/OutreachTemplatePicker";
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
@@ -30,6 +32,41 @@ async function triggerOutreach() {
   await runOutreachJob({
     orgId: session.user.orgId ?? undefined,
     triggeredByUserId: session.user.id,
+  });
+}
+
+async function markManualStatus(formData: FormData) {
+  "use server";
+  const session = await requirePortalSession();
+  requireLucienStaff(session.user.role);
+
+  const logId = String(formData.get("logId") || "");
+  const status = String(formData.get("status") || "");
+  if (!logId || (status !== "SENT" && status !== "REPLIED")) return;
+
+  const log = await prisma.outreachLog.update({
+    where: { id: logId },
+    data: {
+      status: status === "SENT" ? "SENT" : "REPLIED",
+      sentAt: status === "SENT" ? new Date() : undefined,
+      repliedAt: status === "REPLIED" ? new Date() : undefined,
+    },
+  });
+
+  await prisma.talentMatch.updateMany({
+    where: {
+      staffingIntentId: log.staffingIntentId,
+      talentProfileId: log.talentProfileId,
+    },
+    data: { status: status === "REPLIED" ? "RESPONDED" : "CONTACTED" },
+  });
+
+  await prisma.talentProfile.update({
+    where: { id: log.talentProfileId },
+    data: {
+      contactStatus: status === "REPLIED" ? "RESPONDED" : "CONTACTED",
+      lastContactedAt: new Date(),
+    },
   });
 }
 
@@ -75,20 +112,29 @@ export default async function OutreachPage() {
     <div className="space-y-8">
       <div className="space-y-2">
         <p className="text-xs uppercase tracking-[0.3em] text-slate">Outreach</p>
-        <h1 className="text-2xl font-semibold text-ash">Outreach queue</h1>
-        <p className="text-sm text-muted">
-          Email jobs and manual outreach tasks tied to staffing intents.
-        </p>
+        <h1 className="text-2xl font-semibold text-ash">{hrCopy.outreach.title}</h1>
+        <p className="text-sm text-muted">{hrCopy.outreach.subtitle}</p>
+        <p className="text-xs text-slate">{hrCopy.tooltips.outreach}</p>
+      </div>
+
+      <div className="rounded-2xl border border-line/80 bg-soft p-5 text-sm text-muted">
+        <div className="text-xs uppercase tracking-[0.2em] text-slate">
+          {hrCopy.whatNextLabel}
+        </div>
+        <ul className="mt-3 list-disc space-y-1 pl-4">
+          {hrCopy.outreach.whatNext.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
       </div>
 
       {!emailServerConfigured && (
         <div className="rounded-2xl border border-warning/40 bg-warning/10 p-6 text-sm text-muted">
           <div className="text-xs uppercase tracking-[0.2em] text-slate">
-            Email not configured
+            {hrCopy.outreach.emailWarningTitle}
           </div>
           <p className="mt-2">
-            EMAIL_SERVER is not set. Outreach will queue email jobs but will not
-            send them automatically.
+            {hrCopy.outreach.emailWarningBody}
           </p>
         </div>
       )}
@@ -113,32 +159,31 @@ export default async function OutreachPage() {
 
       {outreachLogs.length === 0 && (
         <div className="rounded-2xl border border-line/80 bg-soft p-6 space-y-3 text-sm text-muted">
-          <div className="text-ash">No outreach activity yet.</div>
-          <p>
-            Start with staffing: run matching, then run outreach to generate
-            emails or manual tasks.
-          </p>
+          <div className="text-ash">{hrCopy.outreach.empty.title}</div>
+          <p>{hrCopy.outreach.empty.body}</p>
           <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.2em]">
-            <a
-              href="/portal/hr/staffing"
-              className="btn-animate btn-primary rounded-full px-4 py-2 text-[0.6rem]"
-            >
-              Go to staffing
-            </a>
-            <a
-              href="/portal/hr/outreach"
-              className="rounded-full border border-line/80 px-4 py-2 text-[0.6rem] text-ash"
-            >
-              Run outreach
-            </a>
+            {hrCopy.outreach.empty.ctas.map((cta) => (
+              <a
+                key={`${cta.href}-${cta.label}`}
+                href={cta.href}
+                className={
+                  cta.tone === "primary"
+                    ? "btn-animate btn-primary rounded-full px-4 py-2 text-[0.6rem]"
+                    : "rounded-full border border-line/80 px-4 py-2 text-[0.6rem] text-ash"
+                }
+              >
+                {cta.label}
+              </a>
+            ))}
           </div>
         </div>
       )}
 
       <div className="rounded-2xl border border-line/80 bg-soft p-6 space-y-3">
         <h2 className="text-sm uppercase tracking-[0.2em] text-slate">
-          Manual outreach tasks
+          {hrCopy.outreach.manualTitle}
         </h2>
+        <OutreachTemplatePicker templates={hrCopy.outreachTemplates} />
         {manualTasks.length === 0 ? (
           <p className="text-sm text-muted">No manual tasks queued.</p>
         ) : (
@@ -182,6 +227,28 @@ export default async function OutreachPage() {
                 <div className="text-xs uppercase tracking-[0.2em] text-slate">
                   {log.status}
                 </div>
+                <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.2em]">
+                  <form action={markManualStatus}>
+                    <input type="hidden" name="logId" value={log.id} />
+                    <input type="hidden" name="status" value="SENT" />
+                    <button
+                      type="submit"
+                      className="rounded-full border border-line/80 px-3 py-1 text-[0.6rem] text-ash"
+                    >
+                      Mark sent
+                    </button>
+                  </form>
+                  <form action={markManualStatus}>
+                    <input type="hidden" name="logId" value={log.id} />
+                    <input type="hidden" name="status" value="REPLIED" />
+                    <button
+                      type="submit"
+                      className="rounded-full border border-line/80 px-3 py-1 text-[0.6rem] text-ash"
+                    >
+                      Mark replied
+                    </button>
+                  </form>
+                </div>
               </div>
             );
           })
@@ -190,7 +257,7 @@ export default async function OutreachPage() {
 
       <div className="rounded-2xl border border-line/80 bg-soft p-6 space-y-3">
         <h2 className="text-sm uppercase tracking-[0.2em] text-slate">
-          Email jobs (automated)
+          {hrCopy.outreach.emailTitle}
         </h2>
         {emailJobs.length === 0 ? (
           <p className="text-sm text-muted">No email jobs recorded.</p>
@@ -214,7 +281,7 @@ export default async function OutreachPage() {
 
       <div className="rounded-2xl border border-line/80 bg-soft p-6 space-y-3">
         <h2 className="text-sm uppercase tracking-[0.2em] text-slate">
-          Outreach history
+          {hrCopy.outreach.historyTitle}
         </h2>
         {emailLogs.length === 0 ? (
           <p className="text-sm text-muted">No email outreach logged.</p>

@@ -1,95 +1,85 @@
-import { createHash } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { requireLucienStaff, requirePortalSession } from "@/lib/portal";
 import { runScoutJob } from "@/lib/scout/job";
-import { roleIds, domainIds } from "@/lib/talent/taxonomy";
 import { StatusBadge } from "@/components/portal/StatusBadge";
 import { getMetaBadge } from "@/lib/status-badges";
+import { hrCopy } from "@/lib/hr/copy";
+import { HrImportToolkit } from "@/components/portal/HrImportToolkit";
+import {
+  commitTalentImport,
+  previewTalentImport,
+  type ImportMapping,
+  type ImportRow,
+} from "@/lib/hr/import";
 
-const parseCsv = (text: string) => {
-  const lines = text.split(/\r?\n/).filter((line) => line.trim().length > 0);
-  if (lines.length === 0) return [];
-  const headers = lines[0].split(",").map((h) => h.trim());
-  return lines.slice(1).map((line) => {
-    const values = line.split(",").map((v) => v.trim());
-    return headers.reduce<Record<string, string>>((acc, key, index) => {
-      acc[key] = values[index] ?? "";
-      return acc;
-    }, {});
-  });
-};
-
-const hash = (value: string) => createHash("sha256").update(value).digest("hex");
-
-async function importCsv(formData: FormData) {
+async function previewImport({
+  rows,
+  mapping,
+  source,
+}: {
+  rows: ImportRow[];
+  mapping: ImportMapping;
+  source: string;
+}) {
   "use server";
   const session = await requirePortalSession();
   requireLucienStaff(session.user.role);
+  void source;
+  return previewTalentImport({ rows, mapping });
+}
 
-  const file = formData.get("file");
-  if (!(file instanceof File)) return;
+async function commitImport({
+  rows,
+  mapping,
+  source,
+}: {
+  rows: ImportRow[];
+  mapping: ImportMapping;
+  source: string;
+}) {
+  "use server";
+  const session = await requirePortalSession();
+  requireLucienStaff(session.user.role);
+  return commitTalentImport({ rows, mapping, source });
+}
 
-  const text = await file.text();
-  const rows = parseCsv(text);
-
-  for (const row of rows) {
-    const fullName = row.fullName || row.name || "Unknown";
-    const email = row.email || `scout+${hash(fullName)}@scout.local`;
-    const primaryRole = roleIds.includes(row.primaryRole) ? row.primaryRole : "systems_architect";
-    const secondaryRoles = row.secondaryRoles
-      ? row.secondaryRoles.split("|").filter((item) => roleIds.includes(item))
-      : [];
-    const domains = row.domains
-      ? row.domains.split("|").filter((item) => domainIds.includes(item))
-      : [];
-
-    const profile = await prisma.talentProfile.upsert({
-      where: { email },
-      update: {
-        fullName,
-        primaryRole,
-        secondaryRoles,
-        domains,
-        seniority: row.seniority || "ic_senior",
-        availabilityWindow: row.availabilityWindow || "two_four_weeks",
-        engagementModes: row.engagementModes ? row.engagementModes.split("|") : ["remote"],
-        rateBand: row.rateBand || null,
-        languages: row.languages ? row.languages.split("|") : ["en"],
-        linkedInUrl: row.linkedInUrl || null,
-        xingUrl: row.xingUrl || null,
-        locationTimezone: row.locationTimezone || null,
-      },
-      create: {
-        fullName,
-        email,
-        primaryRole,
-        secondaryRoles,
-        domains,
-        seniority: row.seniority || "ic_senior",
-        availabilityWindow: row.availabilityWindow || "two_four_weeks",
-        engagementModes: row.engagementModes ? row.engagementModes.split("|") : ["remote"],
-        rateBand: row.rateBand || null,
-        languages: row.languages ? row.languages.split("|") : ["en"],
-        linkedInUrl: row.linkedInUrl || null,
-        xingUrl: row.xingUrl || null,
-        locationTimezone: row.locationTimezone || null,
-      },
-    });
-
-    await prisma.talentSignal.create({
-      data: {
-        profileId: profile.id,
-        source: "IMPORT_CSV",
-        version: 1,
-        payloadJson: row,
-        externalProfileUrl: row.linkedInUrl || row.xingUrl || null,
-        externalId: row.externalId || null,
-        dedupeKey: row.dedupeKey || hash(email),
-        sourceQuery: "CSV_IMPORT",
-        capturedAt: new Date(),
-      },
-    });
-  }
+async function manualAdd({
+  fullName,
+  email,
+  linkedInUrl,
+  xingUrl,
+  primaryRole,
+  domains,
+}: {
+  fullName: string;
+  email?: string;
+  linkedInUrl?: string;
+  xingUrl?: string;
+  primaryRole?: string;
+  domains?: string;
+}) {
+  "use server";
+  const session = await requirePortalSession();
+  requireLucienStaff(session.user.role);
+  const rows: ImportRow[] = [
+    {
+      fullName,
+      email: email ?? "",
+      linkedInUrl: linkedInUrl ?? "",
+      xingUrl: xingUrl ?? "",
+      primaryRole: primaryRole ?? "",
+      domains: domains ?? "",
+    },
+  ];
+  const mapping: ImportMapping = {
+    fullName: "fullName",
+    email: "email",
+    linkedInUrl: "linkedInUrl",
+    xingUrl: "xingUrl",
+    primaryRole: "primaryRole",
+    domains: "domains",
+  };
+  return commitTalentImport({ rows, mapping, source: "IMPORT_MANUAL" });
 }
 
 async function createSearchIntent(formData: FormData) {
@@ -168,21 +158,26 @@ export default async function RadarPage() {
     <div className="space-y-8">
       <div className="space-y-2">
         <p className="text-xs uppercase tracking-[0.3em] text-slate">Radar</p>
-        <h1 className="text-2xl font-semibold text-ash">Supply radar</h1>
-        <p className="text-sm text-muted">
-          Capture signals, run scout jobs, and manage search intents.
-        </p>
+        <h1 className="text-2xl font-semibold text-ash">{hrCopy.radar.title}</h1>
+        <p className="text-sm text-muted">{hrCopy.radar.subtitle}</p>
+      </div>
+
+      <div className="rounded-2xl border border-line/80 bg-soft p-5 text-sm text-muted">
+        <div className="text-xs uppercase tracking-[0.2em] text-slate">
+          {hrCopy.whatNextLabel}
+        </div>
+        <ul className="mt-3 list-disc space-y-1 pl-4">
+          {hrCopy.radar.whatNext.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
       </div>
 
       <div className="rounded-2xl border border-line/80 bg-soft p-6 space-y-3 text-sm text-muted">
         <div className="text-xs uppercase tracking-[0.2em] text-slate">
-          How radar works
+          {hrCopy.radar.howItWorksTitle}
         </div>
-        <p>
-          <span className="text-ash">Search intents</span> define what to look
-          for. A <span className="text-ash">scout job</span> executes those
-          intents and converts results into talent signals and profiles.
-        </p>
+        <p>{hrCopy.radar.howItWorksBody}</p>
         {webWarnings.length > 0 && (
           <div className="rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-xs text-ash">
             <div className="text-[0.6rem] uppercase tracking-[0.2em] text-slate">
@@ -211,14 +206,11 @@ export default async function RadarPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl border border-line/80 bg-soft p-6 space-y-3">
+        <div className="rounded-2xl border border-line/80 bg-soft p-6 space-y-3 min-w-0">
           <h2 className="text-sm uppercase tracking-[0.2em] text-slate">
-            Search intents
+            {hrCopy.radar.searchIntentTitle}
           </h2>
-          <p className="text-sm text-muted">
-            Define roles or keywords to scout. Intents can be executed on demand
-            or by cron hitting the scout job API.
-          </p>
+          <p className="text-sm text-muted">{hrCopy.radar.searchIntentBody}</p>
           {searchIntents.length === 0 ? (
             <p className="text-sm text-muted">No search intents configured.</p>
           ) : (
@@ -267,32 +259,26 @@ export default async function RadarPage() {
           </form>
         </div>
 
-        <div className="rounded-2xl border border-line/80 bg-soft p-6 space-y-3">
+        <div className="rounded-2xl border border-line/80 bg-soft p-6 space-y-3 min-w-0">
           <h2 className="text-sm uppercase tracking-[0.2em] text-slate">
-            CSV import
+            {hrCopy.radar.csvTitle}
           </h2>
-          <p className="text-sm text-muted">
-            Upload a CSV with headers like{" "}
-            <span className="text-ash">fullName,email,primaryRole,domains</span>.
-            Use <span className="text-ash">|</span> to separate arrays.
-          </p>
-          <div className="rounded-xl border border-line/80 bg-ink px-4 py-3 text-xs text-slate">
-            fullName,email,primaryRole,secondaryRoles,domains,seniority,availabilityWindow,engagementModes,languages,linkedInUrl,xingUrl
+          <p className="text-sm text-muted">{hrCopy.radar.csvBody}</p>
+          <p className="text-xs text-slate">{hrCopy.tooltips.import}</p>
+          <div className="rounded-xl border border-line/80 bg-ink px-4 py-3 text-xs text-slate min-w-0 max-w-full overflow-x-auto whitespace-pre-wrap break-words">
+            {hrCopy.radar.csvExample}
           </div>
-          <form action={importCsv} className="space-y-3">
-            <input
-              type="file"
-              name="file"
-              accept=".csv"
-              className="w-full rounded-xl border border-line bg-ink px-3 py-2 text-xs text-ash"
-            />
-            <button
-              type="submit"
-              className="btn-animate btn-secondary rounded-full px-4 py-2 text-[0.6rem] uppercase tracking-[0.2em]"
-            >
-              Import CSV
-            </button>
-          </form>
+          <HrImportToolkit
+            previewImport={previewImport}
+            commitImport={commitImport}
+            manualAdd={manualAdd}
+            copy={{
+              importFields: hrCopy.importFields,
+              importExtraFields: hrCopy.importExtraFields,
+              importPresets: hrCopy.importPresets,
+              importTemplates: hrCopy.importTemplates,
+            }}
+          />
         </div>
       </div>
 

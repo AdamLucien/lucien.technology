@@ -1,5 +1,6 @@
 import { requirePortalSession } from "@/lib/portal";
 import { HrSubnav } from "@/components/portal/HrSubnav";
+import { hrCopy } from "@/lib/hr/copy";
 
 const navItems = [
   { href: "/portal/hr", label: "Overview" },
@@ -18,7 +19,7 @@ export default async function HrLayout({
 
   return (
     <div className="space-y-6">
-      <HrSubnav items={navItems} />
+      <HrSubnav items={navItems} label={hrCopy.navLabel} />
       {children}
     </div>
   );

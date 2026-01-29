@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/portal/StatusBadge";
 import { getTalentContactStatusBadge, getTalentStatusBadge } from "@/lib/status-badges";
 import { domainOptions } from "@/lib/talent/taxonomy";
 import { t } from "@/lib/i18n";
+import { hrCopy } from "@/lib/hr/copy";
 
 export default async function TalentListPage({
   searchParams,
@@ -94,10 +95,19 @@ export default async function TalentListPage({
     <div className="space-y-8">
       <div className="space-y-2">
         <p className="text-xs uppercase tracking-[0.3em] text-slate">Talent</p>
-        <h1 className="text-2xl font-semibold text-ash">Talent profiles</h1>
-        <p className="text-sm text-muted">
-          Profiles captured from partners, scouting, and internal sources.
-        </p>
+        <h1 className="text-2xl font-semibold text-ash">{hrCopy.talent.title}</h1>
+        <p className="text-sm text-muted">{hrCopy.talent.subtitle}</p>
+      </div>
+
+      <div className="rounded-2xl border border-line/80 bg-soft p-5 text-sm text-muted">
+        <div className="text-xs uppercase tracking-[0.2em] text-slate">
+          {hrCopy.whatNextLabel}
+        </div>
+        <ul className="mt-3 list-disc space-y-1 pl-4">
+          {hrCopy.talent.whatNext.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
       </div>
 
       <div className="grid gap-4 rounded-2xl border border-line/80 bg-soft p-6 text-xs uppercase tracking-[0.2em] text-slate md:grid-cols-3">
@@ -165,24 +175,22 @@ export default async function TalentListPage({
 
       {profiles.length === 0 ? (
         <div className="rounded-2xl border border-line/80 bg-soft p-6 space-y-3 text-sm text-muted">
-          <div className="text-ash">No talent profiles yet.</div>
-          <p>
-            Talent enters the system via partner submissions, CSV imports, or the
-            scout job (WEB provider).
-          </p>
+          <div className="text-ash">{hrCopy.talent.empty.title}</div>
+          <p>{hrCopy.talent.empty.body}</p>
           <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.2em]">
-            <Link
-              href="/portal/hr/radar"
-              className="btn-animate btn-primary rounded-full px-4 py-2 text-[0.6rem]"
-            >
-              Import CSV
-            </Link>
-            <Link
-              href="/portal/hr/radar"
-              className="rounded-full border border-line/80 px-4 py-2 text-[0.6rem] text-ash"
-            >
-              Go to radar
-            </Link>
+            {hrCopy.talent.empty.ctas.map((cta) => (
+              <Link
+                key={`${cta.href}-${cta.label}`}
+                href={cta.href}
+                className={
+                  cta.tone === "primary"
+                    ? "btn-animate btn-primary rounded-full px-4 py-2 text-[0.6rem]"
+                    : "rounded-full border border-line/80 px-4 py-2 text-[0.6rem] text-ash"
+                }
+              >
+                {cta.label}
+              </Link>
+            ))}
           </div>
         </div>
       ) : (

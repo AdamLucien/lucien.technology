@@ -1,9 +1,0 @@
-{
-  "[project]/app/marketplace/MarketplaceClient.tsx [app-client] (ecmascript, next/dynamic entry)": {
-    "id": "[project]/app/marketplace/MarketplaceClient.tsx [app-client] (ecmascript, next/dynamic entry)",
-    "files": [
-      "static/chunks/_e2fddff8._.js",
-      "static/chunks/app_marketplace_MarketplaceClient_tsx_b4fd9d81._.js"
-    ]
-  }
-}

@@ -1,9 +1,0 @@
-{
-  "[project]/components/SystemMap.tsx [app-client] (ecmascript, next/dynamic entry)": {
-    "id": "[project]/components/SystemMap.tsx [app-client] (ecmascript, next/dynamic entry)",
-    "files": [
-      "static/chunks/components_SystemMap_tsx_2e06ebd8._.js",
-      "static/chunks/components_SystemMap_tsx_ac3779e2._.js"
-    ]
-  }
-}

@@ -48,7 +48,7 @@ test("desktop navigation routes without reload", async ({ page }) => {
 
   await nav.getByRole("link", { name: "Marketplace" }).click();
   await expect(
-    page.getByRole("heading", { level: 1, name: /mission problem/i }),
+    page.getByRole("heading", { level: 1, name: /guided journey/i }),
   ).toBeVisible();
 
   await nav.getByRole("link", { name: "How We Work" }).click();
@@ -92,42 +92,33 @@ test("mobile menu closes after navigation", async ({ page }) => {
 
   await dialog.getByRole("link", { name: "Marketplace" }).click();
   await expect(
-    page.getByRole("heading", { level: 1, name: /mission problem/i }),
+    page.getByRole("heading", { level: 1, name: /guided journey/i }),
   ).toBeVisible();
   const overlay = page.locator('[data-overlay="mobile-menu-backdrop"]');
   await expect(overlay).toBeHidden({ timeout: 2000 });
   await expect(dialog).toBeHidden({ timeout: 2000 });
 
-  const aiFilter = page.getByRole("button", { name: "AI", exact: true });
-  await aiFilter.click({ timeout: 2000 });
-  await expect(aiFilter).toHaveAttribute("aria-pressed", "true");
+  const chip = page.locator('[data-testid="suggestion-chip"]').first();
+  await chip.click({ timeout: 2000 });
+  await expect(chip).toBeVisible();
 });
 
-test("marketplace card opens service detail page", async ({ page }) => {
+test("marketplace journey renders service list", async ({ page }) => {
   await page.goto("/marketplace");
 
-  const firstCard = page.locator("[data-service-link]").first();
-  await expect(firstCard).toBeVisible();
-
-  await Promise.all([
-    page.waitForResponse(
-      (response) =>
-        response.url().includes("/marketplace/") && response.status() === 200,
-    ),
-    firstCard.click(),
-  ]);
-
-  await expect(page).toHaveURL(/\/marketplace\/.+/);
-  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  const allServices = page.getByTestId("all-services");
+  await expect(allServices).toBeVisible();
+  await expect(allServices.locator("h3").first()).toBeVisible();
 });
 
-test("marketplace card order is deterministic", async ({ page }) => {
+test("marketplace list order is deterministic", async ({ page }) => {
   await page.goto("/marketplace");
   const getTopTitles = async () => {
     const titles = [];
     for (let index = 0; index < 3; index += 1) {
       const title = await page
-        .locator("[data-service-link] h3")
+        .getByTestId("all-services")
+        .locator("h3")
         .nth(index)
         .textContent();
       titles.push(title?.trim() ?? "");

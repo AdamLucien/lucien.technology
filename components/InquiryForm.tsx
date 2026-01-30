@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useMemo, useState } from "react";
 import { services } from "@/content/services";
 
 const timeframeOptions = [
@@ -26,14 +26,83 @@ export function InquiryForm({
   redirectTo = "/request-scope/confirm",
 }: InquiryFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const prefill = useMemo(() => {
+    if (!searchParams) {
+      return {
+        summary: null,
+        primaryService: "",
+        note: "",
+        timeframe: "",
+      };
+    }
+    const servicesParam = searchParams.get("services");
+    const serviceParam = searchParams.get("service");
+    const problemParam = searchParams.get("problem") ?? "";
+    const outcomeParam = searchParams.get("outcome") ?? "";
+    const domainsParam = searchParams.get("domains") ?? "";
+    const industriesParam = searchParams.get("industries") ?? "";
+    const urgencyParam = searchParams.get("urgency") ?? "";
+    const timeframeParam = searchParams.get("timeframe") ?? "";
+    const modeParam = searchParams.get("mode") ?? "";
+    const noteParam = searchParams.get("note") ?? "";
+
+    const selectedServices = servicesParam
+      ? servicesParam.split(",").map((item) => item.trim()).filter(Boolean)
+      : [];
+
+    const summary = {
+      problem: problemParam || undefined,
+      outcome: outcomeParam || undefined,
+      services: selectedServices.length > 0 ? selectedServices : undefined,
+      domains: domainsParam
+        ? domainsParam.split(",").map((item) => item.trim()).filter(Boolean)
+        : undefined,
+      industries: industriesParam
+        ? industriesParam.split(",").map((item) => item.trim()).filter(Boolean)
+        : undefined,
+      urgency: urgencyParam || undefined,
+      mode: modeParam || undefined,
+    };
+
+    const primaryService =
+      serviceParam || selectedServices[0] || initialService;
+
+    const summaryNote = noteParam
+      ? noteParam
+      : [problemParam, outcomeParam].filter(Boolean).join(" | ");
+
+    return {
+      summary:
+        summary.problem ||
+        summary.outcome ||
+        summary.services ||
+        summary.domains ||
+        summary.industries ||
+        summary.urgency ||
+        summary.mode
+          ? summary
+          : null,
+      primaryService,
+      note: summaryNote.slice(0, 140),
+      timeframe: timeframeParam,
+    };
+  }, [searchParams, initialService]);
   const [status, setStatus] = useState<
     "idle" | "submitting" | "success" | "error"
   >("idle");
-  const [service, setService] = useState(initialService);
+  const [service, setService] = useState(
+    initialService || prefill.primaryService || "",
+  );
   const [mode] = useState(initialMode);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
-  const [note, setNote] = useState(initialNote);
-  const [timeframe, setTimeframe] = useState(initialTimeframe);
+  const [note, setNote] = useState(
+    initialNote || prefill.note || "",
+  );
+  const [timeframe, setTimeframe] = useState(
+    initialTimeframe || prefill.timeframe || "",
+  );
+  const prefillSummary = prefill.summary;
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -89,6 +158,42 @@ export function InquiryForm({
       onSubmit={onSubmit}
       className="space-y-6 rounded-2xl border border-line/80 bg-soft p-6"
     >
+      {prefillSummary && (
+        <div className="rounded-xl border border-line/80 bg-ink/60 p-4 text-xs text-muted">
+          <p className="text-xs uppercase tracking-[0.2em] text-slate">
+            Prefilled from marketplace
+          </p>
+          <div className="mt-2 space-y-1">
+            {prefillSummary.problem ? (
+              <p className="break-words">Problem: {prefillSummary.problem}</p>
+            ) : null}
+            {prefillSummary.outcome ? (
+              <p className="break-words">Outcome: {prefillSummary.outcome}</p>
+            ) : null}
+            {prefillSummary.services?.length ? (
+              <p className="break-words">
+                Services: {prefillSummary.services.join(", ")}
+              </p>
+            ) : null}
+            {prefillSummary.domains?.length ? (
+              <p className="break-words">
+                Domains: {prefillSummary.domains.join(", ")}
+              </p>
+            ) : null}
+            {prefillSummary.industries?.length ? (
+              <p className="break-words">
+                Industries: {prefillSummary.industries.join(", ")}
+              </p>
+            ) : null}
+            {prefillSummary.urgency ? (
+              <p>Urgency: {prefillSummary.urgency}</p>
+            ) : null}
+            {prefillSummary.mode ? (
+              <p>Mode: {prefillSummary.mode}</p>
+            ) : null}
+          </div>
+        </div>
+      )}
       <div className="text-xs uppercase tracking-[0.2em] text-slate">
         Delivery mode: <span className="text-ash">{mode}</span>
       </div>
